@@ -12,10 +12,6 @@ class AlgorithmApplicationTests {
     void contextLoads() {
         LinkStack linkStack = new LinkStack();
         linkStack.push("x");
-        linkStack.push("y");
-        linkStack.push("z");
-        System.out.println(linkStack.pop());
-        System.out.println(linkStack.pop());
         System.out.println(linkStack.pop());
     }
 
@@ -141,11 +137,7 @@ class AlgorithmApplicationTests {
         private LinkNode top;
 
         public void push(String value) {
-            if (top == null) {
-                top = new LinkNode(value, null);
-            } else {
-                top = new LinkNode(value, top);
-            }
+            top = new LinkNode(value, top);
         }
 
         public String pop() {
@@ -300,10 +292,6 @@ class AlgorithmApplicationTests {
     /**
      * ---------------------------- 插入排序 ----------------------------
      */
-
-    /**
-     * 尾插入法
-     */
     public void insertSort(int[] items, int count) {
         if (count <= 1) {
             return;
@@ -324,6 +312,12 @@ class AlgorithmApplicationTests {
 
     /**
      * ---------------------------- 希尔排序 ----------------------------
+     * 最为层执行step = step / 2，当step == 1时时最后一次执行，使用说代码执行多少次step会为1呢，step每次循环都除以2，得到n/2^x=1，x代表除以多少次2结果会得到1，
+     * 也就是循环体执行的次数，得到x=log₂n，完成的次数还有+1才结束；所以时间复杂度是O(logn)。
+     * 现在看for的循环体，最好情况是数组已经有序，相当于最里层的for只会执行一次就break了，也就只有一层循环；假设count无穷大，step即使每次除以2，也可以看做是无穷大，
+     * 使用for循环每次可以任务是执行了n次，所以时间复杂度是O(nlogn)。
+     * 最坏情况，最里层的for每次都执行个完整的，和外层for一起也就相当于是插入排序了，但for循环受限与step，step每次都是n½，不是整个数组循环，
+     * 时间复杂度可以认为是O(n²/n½)=O(n)，再乘上O(logn)，得到的时间复杂度也就是O(nlogn)。
      */
     public void shellSort(int[] items, int count) {
         if (count <= 1) {
@@ -348,16 +342,6 @@ class AlgorithmApplicationTests {
     }
 
     /**
-     * 头插入法
-     */
-    public void insertHeadSort(int[] items, int count) {
-        if (count <= 1) {
-            return;
-        }
-
-    }
-
-    /**
      * ---------------------------- 选择排序 ----------------------------
      */
     public void selectSort(int[] items, int count) {
@@ -366,7 +350,7 @@ class AlgorithmApplicationTests {
         }
         for (int i = 0; i < count - 1; i++) {
             int minIndex = i;
-            for (int j = i + 1; j < count; j ++) {
+            for (int j = i + 1; j < count; j++) {
                 if (items[j] < items[minIndex]) {
                     minIndex = j;
                 }
