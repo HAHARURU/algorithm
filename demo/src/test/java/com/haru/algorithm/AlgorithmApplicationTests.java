@@ -417,27 +417,182 @@ class AlgorithmApplicationTests {
         if (start >= end) {
             return;
         }
+        int mid = partition(items, start, end);
+        quickSort(items, start, mid - 1);
+        quickSort(items, mid + 1, end);
+    }
 
+    private int partition(int[] items, int start, int end) {
+        int sortEnd = start;  // sortEnd是有序的末尾
+        int j = start; // j是为了遍历数组
+        int pivot = items[end];
+        for (; j < end; j++) {
+            // 找比pivot小的
+            if (items[j] < pivot) {
+                // j遍历处恰好是有序的末尾，不需要交换
+                if (sortEnd != j) {
+                    // 放到有序的末尾
+                    int temp = items[sortEnd];
+                    items[sortEnd] = items[j];
+                    items[j] = temp;
+                }
+                // 找到，增加sortEnd
+                sortEnd++;
+            }
+        }
+        if (pivot != sortEnd) {
+            // pivot放在有序最后的下一个位置
+            int temp = items[pivot];
+            items[pivot] = items[sortEnd];
+            items[sortEnd] = temp;
+        }
+        return sortEnd;
     }
 
     /**
      * ---------------------------- 计数排序 ----------------------------
      */
     public void countingSort(int[] items, int count) {
+        if (count < 2) {
+            return;
+        }
+        // 先找到最大的下标
+        int max = items[0];
+        int i = 0;
+        for (; i < count; i++) {
+            if (items[i] > max) {
+                max = i;
+            }
+        }
+        // 构造一个数组，用于表示每一项加上前面的一项，表示包含这个值items[i]在内前面有多少个数，数组大小就是items中最大值
+        int[] frontCountArray = new int[max + 1];
+        for (i = 0; i < count; i++) {
+            frontCountArray[items[i]]++;
+        }
+        for (i = 1; i < count; i++) {
+            frontCountArray[i] += frontCountArray[i - 1];
+        }
 
+        // 用于排序的数组
+        int[] sortArray = new int[count];
+
+        // 保证稳定性，从后向前遍历
+        for (i = count - 1; i >= 0; i--) {
+            int sortArrayIndex = frontCountArray[items[i]] - 1; // 在sortArray中，items[i]应该在哪个位置
+            sortArray[sortArrayIndex] = items[i];
+            frontCountArray[items[i]]--;
+        }
+
+        // 替换原数组
+        for (i = 0; i < count; i++) {
+            items[i] = sortArray[i];
+        }
     }
 
     /**
      * ---------------------------- 基数排序 ----------------------------
      */
     public void radixSort(int[] items, int count) {
+        if (count < 2) {
+            return;
+        }
+        int max = items[0];
+        int i = 0;
+        for (; i < count; i++) {
+            if (items[i] > max) {
+                max = i;
+            }
+        }
 
+        // 确定值最多有多少位，遍历每一位
+        for (i = 0; max / i > 0; i *= 10) {
+            countingSortByRadix(items, count, i);
+        }
+    }
+
+    /**
+     * ---------------------------- 基数排序 ----------------------------
+     */
+    public void countingSortByRadix(int[] items, int count, int exponent) {
+        // 每一位都是0~9，所以大小时10
+        int i;
+        int[] frontCountArray = new int[10];
+        for (i = 0; i < count; i++) {
+            // 计算值每一位上的数
+            frontCountArray[items[i] / exponent % 10]++;
+        }
+        for (i = 1; i < count; i++) {
+            frontCountArray[i] += frontCountArray[i - 1];
+        }
+
+        // 用于排序的数组
+        int[] sortArray = new int[count];
+
+        // 保证稳定性，从后向前遍历
+        for (i = count - 1; i >= 0; i--) {
+            sortArray[frontCountArray[items[i] / exponent % 10] - 1] = items[i];
+            frontCountArray[items[i] / exponent % 10]--;
+        }
+
+        // 替换原数组
+        for (i = 0; i < count; i++) {
+            items[i] = sortArray[i];
+        }
     }
 
     /**
      * ---------------------------- 桶排序 ----------------------------
      */
     public void bucketSort(int[] items, int count, int bucketSize) {
+        if (count < 2) {
+            return;
+        }
 
+        int max = items[0];
+        int min = items[0];
+        int i = 0;
+        int j;
+        for (; i < count; i++) {
+            if (items[i] > max) {
+                max = i;
+            }
+            if (items[i] < min) {
+                min = i;
+            }
+        }
+        // 桶个数
+        int bucketCount = (max - min) / bucketSize + 1;
+        // 二维数组存放每个桶内元素
+        int[][] bucket = new int[bucketCount][bucketSize];
+        // 每个桶真正的元素个数，同时还能表示某个桶中元素的下标，只要再使用后递增
+        int[] bucketRealSize = new int[bucketCount];
+
+        for (i = 0; i < count; i++) {
+            int bucketIndex = (items[i] - min) / bucketSize;
+            if (bucketRealSize[bucketIndex] == bucket[bucketIndex].length) {
+                // 桶中元素的个数要超过初始设定的每个桶容量，就要扩容
+                int[] newBucketItems = new int[bucket[bucketIndex].length * 2];
+                for (j = 0; j < bucket[bucketIndex].length; j++) {
+                    newBucketItems[j] = bucket[bucketIndex][j];
+                }
+                bucket[bucketIndex] = newBucketItems;
+            }
+            bucket[bucketIndex][bucketRealSize[bucketIndex]++] = items[i];
+        }
+
+        int k = 0;
+        for (i = 0; i < bucketCount; i++) {
+            // 桶中只有真正有元素才快排
+            if (bucketRealSize[i] == 0) {
+                continue;
+            }
+            quickSort(bucket[i], 0, bucketRealSize[i] - 1);
+            // 替换原数组
+            for (j = 0; j < bucketRealSize[i]; j++) {
+                items[k++] = bucket[i][j];
+            }
+        }
     }
+
+
 }
