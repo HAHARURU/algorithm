@@ -5,6 +5,8 @@ import lombok.ToString;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.concurrent.ArrayBlockingQueue;
+
 @SpringBootTest
 class AlgorithmApplicationTests {
 
@@ -311,13 +313,10 @@ class AlgorithmApplicationTests {
     }
 
     /**
-     * ---------------------------- 希尔排序 ----------------------------
-     * 最为层执行step = step / 2，当step == 1时时最后一次执行，使用说代码执行多少次step会为1呢，step每次循环都除以2，得到n/2^x=1，x代表除以多少次2结果会得到1，
-     * 也就是循环体执行的次数，得到x=log₂n，完成的次数还有+1才结束；所以时间复杂度是O(logn)。
-     * 现在看for的循环体，最好情况是数组已经有序，相当于最里层的for只会执行一次就break了，也就只有一层循环；假设count无穷大，step即使每次除以2，也可以看做是无穷大，
-     * 使用for循环每次可以任务是执行了n次，所以时间复杂度是O(nlogn)。
-     * 最坏情况，最里层的for每次都执行个完整的，和外层for一起也就相当于是插入排序了，但for循环受限与step，step每次都是n½，不是整个数组循环，
-     * 时间复杂度可以认为是O(n²/n½)=O(n)，再乘上O(logn)，得到的时间复杂度也就是O(nlogn)。
+     * ---------------------------- 希尔排序 ---------------------------- 最外层执行step = step / 2，当step ==
+     * 1时是最后一次执行，使用说代码执行多少次step会为1呢，step每次循环都除以2，得到n/2^x=1，x代表除以多少次2结果会得到1， 也就是循环体执行的次数，得到x=log₂n，完成的次数还有+1才结束；所以时间复杂度是O(logn)。
+     * 现在看for的循环体，最好情况是数组已经有序，相当于最里层的for只会执行一次就break了，也就只有一层循环；假设count无穷大，step即使每次除以2，也可以看做是无穷大， 使用for循环每次可以任务是执行了n次，所以时间复杂度是O(nlogn)。
+     * 最坏情况，最里层的for每次都执行个完整的，和外层for一起也就相当于是插入排序了，但for循环受限与step，step每次都是n½，不是整个数组循环， 时间复杂度可以认为是O(n²/n½)=O(n)，再乘上O(logn)，得到的时间复杂度也就是O(nlogn)。
      */
     public void shellSort(int[] items, int count) {
         if (count <= 1) {
@@ -359,5 +358,86 @@ class AlgorithmApplicationTests {
             items[minIndex] = items[i];
             items[i] = temp;
         }
+    }
+
+    /**
+     * ---------------------------- 归并排序 ----------------------------
+     */
+    public void mergeSort(int[] items, int start, int end) {
+        if (start >= end) {
+            return;
+        }
+        // 确定中间点
+        int mid = (end - start) / 2 + start;
+        mergeSort(items, start, mid);
+        mergeSort(items, mid + 1, end);
+        // 合并
+        merge(items, start, mid, end);
+    }
+
+    private void merge(int[] items, int start, int mid, int end) {
+        int i = start;
+        int j = mid + 1;
+        // 临时存储合并排序后的数组
+        int[] temp = new int[end - start + 1];
+        int k = 0;
+        while (i <= mid && j <= end) {
+            if (items[i] <= items[j]) {
+                temp[k++] = items[i++];
+            } else {
+                temp[k++] = items[j++];
+            }
+        }
+        // i或j可能有一方面并没有遍历完
+        int surplusStart;
+        int surplusEnd;
+        if (i <= mid) {
+            surplusStart = i;
+            surplusEnd = mid;
+        } else {
+            surplusStart = j;
+            surplusEnd = end;
+        }
+
+        // 将剩余的复制进temp
+        while (surplusStart <= surplusEnd) {
+            temp[k++] = items[surplusStart++];
+        }
+
+        // 替换原数组
+        for (i = 0; i < temp.length; i++) {
+            items[start + i] = temp[i];
+        }
+    }
+
+    /**
+     * ---------------------------- 快速排序 ----------------------------
+     */
+    public void quickSort(int[] items, int start, int end) {
+        if (start >= end) {
+            return;
+        }
+
+    }
+
+    /**
+     * ---------------------------- 计数排序 ----------------------------
+     */
+    public void countingSort(int[] items, int count) {
+
+    }
+
+    /**
+     * ---------------------------- 基数排序 ----------------------------
+     */
+    public void radixSort(int[] items, int count) {
+
+    }
+
+    /**
+     * ---------------------------- 桶排序 ----------------------------
+     */
+    public void bucketSort(int[] items, int count, int bucketSize) {
+
     }
 }
