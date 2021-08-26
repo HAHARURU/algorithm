@@ -18,7 +18,7 @@ class AlgorithmApplicationTests {
     }
 
     /**
-     * ---------------------------- 时间复杂度 ----------------------------
+     * ############################# 时间复杂度 #############################
      */
     int n;
     int[] arrays = new int[n];
@@ -35,6 +35,11 @@ class AlgorithmApplicationTests {
         }
         arrays[count++] = value;
     }
+
+
+    /**
+     * ############################# 数据结构 #############################
+     */
 
     /**
      * ---------------------------- 数组 ----------------------------
@@ -256,6 +261,11 @@ class AlgorithmApplicationTests {
             return value;
         }
     }
+
+
+    /**
+     * ############################# 排序 #############################
+     */
 
     /**
      * ---------------------------- 冒泡排序 ----------------------------
@@ -595,4 +605,146 @@ class AlgorithmApplicationTests {
     }
 
 
+    /**
+     * ############################# 查找 #############################
+     */
+
+    /**
+     * ---------------------------- 二分查找非递归 ----------------------------
+     */
+    public int bSearch(int[] items, int value) {
+        if (items.length == 0) {
+            return -1;
+        }
+        int low = 0;
+        int high = items.length - 1;
+        while (low <= high) {
+            int mid = low + (high - low) >> 1;
+            if (items[mid] == value) {
+                return mid;
+            } else if (items[mid] > value) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * ---------------------------- 二分查找递归 ----------------------------
+     */
+    public int bSearchRecursion(int[] items, int low, int high, int value) {
+        if (items.length == 0 || low > high) {
+            return -1;
+        }
+        int mid = low + (high - low) >> 1;
+        if (items[mid] == value) {
+            return mid;
+        } else if (items[mid] > value) {
+            return bSearchRecursion(items, low, mid - 1, value);
+        } else {
+            return bSearchRecursion(items, mid + 1, high, value);
+        }
+    }
+
+    /**
+     * ---------------------------- 二分查找第一个等于 ----------------------------
+     */
+    public int bSearchFirstEq(int[] items, int value) {
+        if (items.length == 0) {
+            return -1;
+        }
+        int low = 0;
+        int high = items.length - 1;
+        while (low <= high) {
+            int mid = low + (high - low) >> 1;
+            if (items[mid] == value) {
+                // 若前一个也是等于value，说明mid不是第一个等于的，要缩到前半部；mid为0是个特殊情况，肯定是第一个了
+                if (mid == 0 || items[mid - 1] != value) {
+                    return mid;
+                }
+                high = mid - 1;
+            } else if (items[mid] > value) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * ---------------------------- 二分查找最后一个等于 ----------------------------
+     */
+    public int bSearchLastEq(int[] items, int value) {
+        if (items.length == 0) {
+            return -1;
+        }
+        int low = 0;
+        int high = items.length - 1;
+        while (low <= high) {
+            int mid = low + (high - low) >> 1;
+            if (items[mid] == value) {
+                // 若后一个也是等于value，说明mid不是最后一个等于的，要缩到后半部；mid为数组末尾是个特殊情况，肯定是最后一个了
+                if (mid == items.length - 1 || items[mid + 1] != value) {
+                    return mid;
+                }
+                low = mid + 1;
+            } else if (items[mid] > value) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * ---------------------------- 二分查找第一个大于等于 ----------------------------
+     */
+    public int bSearchFirstGt(int[] items, int value) {
+        if (items.length == 0) {
+            return -1;
+        }
+        int low = 0;
+        int high = items.length - 1;
+        while (low <= high) {
+            int mid = low + (high - low) >> 1;
+            if (items[mid] >= value) {
+                // 若前一个也是大于等于value，说明mid不是第一个大于等于的，要缩到前半部；mid为0是个特殊情况，肯定是第一个了
+                if (mid == 0 || items[mid - 1] < value) {
+                    return mid;
+                }
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * ---------------------------- 二分查找最后一个小于等于 ----------------------------
+     */
+    public int bSearchLastLt(int[] items, int value) {
+        if (items.length == 0) {
+            return -1;
+        }
+        int low = 0;
+        int high = items.length - 1;
+        while (low <= high) {
+            int mid = low + (high - low) >> 1;
+            if (items[mid] <= value) {
+                // 若后一个也是小于等于value，说明mid不是最后一个小于等于的，要缩到后半部；mid为数组末尾是个特殊情况，肯定是最后一个了
+                if (mid == items.length - 1 || items[mid + 1] > value) {
+                    return mid;
+                }
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+        return -1;
+    }
 }
