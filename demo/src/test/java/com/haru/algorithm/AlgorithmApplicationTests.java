@@ -5,16 +5,13 @@ import lombok.ToString;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.concurrent.ArrayBlockingQueue;
-
 @SpringBootTest
 class AlgorithmApplicationTests {
 
     @Test
     void contextLoads() {
-        LinkStack linkStack = new LinkStack();
-        linkStack.push("x");
-        System.out.println(linkStack.pop());
+        int[] items = new int[]{1, 1, 1, 1, 5};
+        System.out.println(quickFindKth(items, 0, items.length - 1, 6));
     }
 
     /**
@@ -427,12 +424,12 @@ class AlgorithmApplicationTests {
         if (start >= end) {
             return;
         }
-        int mid = partition(items, start, end);
+        int mid = findMid(items, start, end);
         quickSort(items, start, mid - 1);
         quickSort(items, mid + 1, end);
     }
 
-    private int partition(int[] items, int start, int end) {
+    private int findMid(int[] items, int start, int end) {
         int sortEnd = start;  // sortEnd是有序的末尾
         int j = start; // j是为了遍历数组
         int pivot = items[end];
@@ -450,13 +447,36 @@ class AlgorithmApplicationTests {
                 sortEnd++;
             }
         }
-        if (pivot != sortEnd) {
+        if (end != sortEnd) {
             // pivot放在有序最后的下一个位置
-            int temp = items[pivot];
-            items[pivot] = items[sortEnd];
+            int temp = items[end];
+            items[end] = items[sortEnd];
             items[sortEnd] = temp;
         }
         return sortEnd;
+    }
+
+    /**
+     * ---------------------------- 找第K小的 ----------------------------
+     */
+    public Integer quickFindKth(int[] items, int start, int end, int k) {
+        if (end + 1 < k) {
+            return null;
+        }
+        if (start == end) {
+            return items[start];
+        }
+        if (start > end) {
+            return null;
+        }
+        int mid = findMid(items, start, end);
+        if (mid + 1 == k) {
+            return items[mid];
+        } else if (k > mid + 1) {
+            return quickFindKth(items, mid + 1, end, k);
+        } else {
+            return quickFindKth(items, start, mid - 1, k);
+        }
     }
 
     /**
