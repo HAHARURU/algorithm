@@ -767,4 +767,121 @@ class AlgorithmApplicationTests {
         }
         return -1;
     }
+
+    /**
+     * ############################# 跳表 #############################
+     */
+
+    /**
+     * -1* ---->  *
+     * -1* ---->  *
+     * -1* ----> 6* ------------->  * ----> NULL
+     * -1* ---->  * -------------> 9* ----> NULL
+     * -1* ---->  * ----> 7* ---->  * ----> NULL
+     */
+    class SkipList {
+        class SkipNode {
+            private int value;
+
+            /**
+             * 当前节点占几层
+             */
+            private int maxLevel;
+            /**
+             * 每一层的后继节点
+             */
+            private SkipNode[] perLevelNext;
+
+            public SkipNode(int value, int maxLevel) {
+                this.value = value;
+                this.maxLevel = maxLevel;
+                this.perLevelNext = new SkipNode[maxLevel];
+            }
+
+            public int getValue() {
+                return value;
+            }
+
+            public void setValue(int value) {
+                this.value = value;
+            }
+
+            public int getMaxLevel() {
+                return maxLevel;
+            }
+
+            public void setMaxLevel(int maxLevel) {
+                this.maxLevel = maxLevel;
+            }
+
+            public SkipNode[] getPerLevelNext() {
+                return perLevelNext;
+            }
+
+            public void setPerLevelNext(SkipNode[] perLevelNext) {
+                this.perLevelNext = perLevelNext;
+            }
+        }
+
+        /**
+         * 用于随机生成节点高度
+         */
+        private static final float SKIP_LIST_RANDOM = 0.5f;
+
+        /**
+         * 控制节点最大高度为16
+         */
+        private static final int MAX_LEVEL = 16;
+
+        /**
+         * 跳表高度
+         */
+        private int level;
+
+        /**
+         * 哨兵头节点
+         */
+        private SkipNode head = new SkipNode(-1, MAX_LEVEL);
+
+        /**
+         * 高度每加一概率就折半。因为理论上一层的节点个数都比下一层少一半。
+         *
+         * @return 随机高度
+         */
+        public int randomLevel() {
+            int level = 1;
+            while (Math.random() < SKIP_LIST_RANDOM && level < MAX_LEVEL) {
+                level++;
+            }
+            return level;
+        }
+
+        public void insert(int value) {
+            int i;
+            int randomLevel = randomLevel();
+            SkipNode skipNode = new SkipNode(value, randomLevel);
+
+            SkipNode[] prePreviousSkipNodes = new SkipNode[randomLevel];
+
+            SkipNode forwardSkipNode = head;
+            // 每一层从头节点开始向后遍历，找该节点插入的位置，它的前节点比它小，后节点比它大，也就是找第一个比它大的节点的前一个节点
+            for (i = randomLevel - 1; i >= 0; i--) {
+                while (forwardSkipNode.perLevelNext[i] != null && forwardSkipNode.perLevelNext[i].value < value) {
+                    forwardSkipNode = forwardSkipNode.perLevelNext[i];
+                }
+                // 暂存这一层的前节点
+                prePreviousSkipNodes[i] = forwardSkipNode;
+            }
+            // 然后将该节点在每一层插入
+            for (i = 0; i < randomLevel; i++) {
+                skipNode.perLevelNext[i] = prePreviousSkipNodes[i].perLevelNext[i];
+                prePreviousSkipNodes[i].perLevelNext[i] = skipNode;
+            }
+
+            // 更新跳表高度
+            if (level < randomLevel) {
+                level = randomLevel;
+            }
+        }
+    }
 }
