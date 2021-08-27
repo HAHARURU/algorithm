@@ -773,11 +773,11 @@ class AlgorithmApplicationTests {
      */
 
     /**
-     * -1* ---->  *
-     * -1* ---->  *
-     * -1* ----> 6* ------------->  * ----> NULL
-     * -1* ---->  * -------------> 9* ----> NULL
-     * -1* ---->  * ----> 7* ---->  * ----> NULL
+     * -1* ---->  * -------------------------------> NULL
+     * -1* ---->  * -------------------------------> NULL
+     * -1* ----> 4* ---------------------->  * ----> NULL
+     * -1* ---->  * -------------> 8* ----> 9* ----> NULL
+     * -1* ---->  * ----> 6* ---->  * ---->  * ----> NULL
      */
     class SkipList {
         class SkipNode {
@@ -844,7 +844,7 @@ class AlgorithmApplicationTests {
         private SkipNode head = new SkipNode(-1, MAX_LEVEL);
 
         /**
-         * 高度每加一概率就折半。因为理论上一层的节点个数都比下一层少一半。
+         * 高度每加一概率就减半。因为理论上一层的节点个数都比下一层少一半。
          *
          * @return 随机高度
          */
@@ -861,7 +861,7 @@ class AlgorithmApplicationTests {
             int randomLevel = randomLevel();
             SkipNode skipNode = new SkipNode(value, randomLevel);
 
-            SkipNode[] prePreviousSkipNodes = new SkipNode[randomLevel];
+            SkipNode[] preLevelPreviousSkipNodes = new SkipNode[randomLevel];
 
             SkipNode forwardSkipNode = head;
             // 每一层从头节点开始向后遍历，找该节点插入的位置，它的前节点比它小，后节点比它大，也就是找第一个比它大的节点的前一个节点
@@ -870,18 +870,48 @@ class AlgorithmApplicationTests {
                     forwardSkipNode = forwardSkipNode.perLevelNext[i];
                 }
                 // 暂存这一层的前节点
-                prePreviousSkipNodes[i] = forwardSkipNode;
+                preLevelPreviousSkipNodes[i] = forwardSkipNode;
             }
             // 然后将该节点在每一层插入
             for (i = 0; i < randomLevel; i++) {
-                skipNode.perLevelNext[i] = prePreviousSkipNodes[i].perLevelNext[i];
-                prePreviousSkipNodes[i].perLevelNext[i] = skipNode;
+                skipNode.perLevelNext[i] = preLevelPreviousSkipNodes[i].perLevelNext[i];
+                preLevelPreviousSkipNodes[i].perLevelNext[i] = skipNode;
             }
 
             // 更新跳表高度
             if (level < randomLevel) {
                 level = randomLevel;
             }
+        }
+
+        public void delete(int value) {
+            // 删除节点，为了不再去调用find找出节点的最大层数的消耗，直接当成拥有当前跳表的最大层，每层进行判断，通常该节点在某一层不存在时会快速结束
+            SkipNode skipNode = new SkipNode(value, level + 1);
+            SkipNode[] preLevelPreviousSkipNodes = new SkipNode[level + 1];
+            SkipNode forwardSkipNode = head;
+            for (int i = level; i >= 1; i--) {
+                // 删除的值大于跳表中所有的值，forwardSkipNode.perLevelNext[i]会落在最后一个节点上，此时不再要向后查找，直接返回了
+                while (forwardSkipNode.perLevelNext[i] != null && forwardSkipNode.perLevelNext[i].value < value) {
+                    forwardSkipNode = forwardSkipNode.perLevelNext[i];
+                }
+                preLevelPreviousSkipNodes[i] = forwardSkipNode;
+            }
+            // 此时forwardSkipNode落在第一层。若删除的值不在跳表中forwardSkipNode.perLevelNext[0].value != value；
+            // forwardSkipNode.perLevelNext[0] == null要不跳表为空，要不删除的值大于跳表中所有的值
+            if (forwardSkipNode.perLevelNext[0] != null && forwardSkipNode.perLevelNext[0].value == value) {
+                for (int i = level; i >= 0; i--) {
+                    // 每一层的前节点执行当前节点的下一个
+                    preLevelPreviousSkipNodes[i].perLevelNext[i] = preLevelPreviousSkipNodes[i].perLevelNext[i].perLevelNext[i];
+                }
+            }
+            // 更新跳表高度，头节点没一层若是指定NULL的，这一层就是空层
+            while (head.perLevelNext[level] == null) {
+                level--;
+            }
+        }
+
+        public int find(int value) {
+            return 0;
         }
     }
 }
