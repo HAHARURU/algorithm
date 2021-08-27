@@ -773,11 +773,11 @@ class AlgorithmApplicationTests {
      */
 
     /**
-     * -1* ---->  * -------------------------------> NULL
-     * -1* ---->  * -------------------------------> NULL
+     *   * ---->  * -------------------------------> NULL
+     *   * ---->  * -------------------------------> NULL
      * -1* ----> 4* ---------------------->  * ----> NULL
-     * -1* ---->  * -------------> 8* ----> 9* ----> NULL
-     * -1* ---->  * ----> 6* ---->  * ---->  * ----> NULL
+     *   * ---->  * -------------> 8* ----> 9* ----> NULL
+     *   * ---->  * ----> 6* ---->  * ---->  * ----> NULL
      */
     class SkipList {
         class SkipNode {
@@ -886,7 +886,6 @@ class AlgorithmApplicationTests {
 
         public void delete(int value) {
             // 删除节点，为了不再去调用find找出节点的最大层数的消耗，直接当成拥有当前跳表的最大层，每层进行判断，通常该节点在某一层不存在时会快速结束
-            SkipNode skipNode = new SkipNode(value, level + 1);
             SkipNode[] preLevelPreviousSkipNodes = new SkipNode[level + 1];
             SkipNode forwardSkipNode = head;
             for (int i = level; i >= 1; i--) {
@@ -910,8 +909,18 @@ class AlgorithmApplicationTests {
             }
         }
 
-        public int find(int value) {
-            return 0;
+        public SkipNode find(int value) {
+            SkipNode forwardSkipNode = head;
+            for (int i = level; i >= 0; i++) {
+                while (forwardSkipNode.perLevelNext[i] != null && forwardSkipNode.perLevelNext[i].value < value) {
+                    forwardSkipNode = forwardSkipNode.perLevelNext[i];
+                }
+            }
+            if (forwardSkipNode.perLevelNext[0] != null && forwardSkipNode.perLevelNext[0].value == value) {
+                return forwardSkipNode.perLevelNext[0];
+            } else {
+                return null;
+            }
         }
     }
 }
