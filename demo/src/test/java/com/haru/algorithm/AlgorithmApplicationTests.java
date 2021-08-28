@@ -5,6 +5,11 @@ import lombok.ToString;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Stack;
+import java.util.concurrent.LinkedBlockingQueue;
+
 @SpringBootTest
 class AlgorithmApplicationTests {
 
@@ -144,15 +149,18 @@ class AlgorithmApplicationTests {
             top = new LinkNode(value, top);
         }
 
-        public String pop() {
+        public LinkNode pop() {
             if (top == null) {
                 return null;
             }
-            String value = top.getValue();
+            LinkNode topResult = top;
             top = top.next;
-            return value;
+            return topResult;
         }
 
+        public boolean isEmpty() {
+            return top == null;
+        }
 
     }
 
@@ -920,6 +928,155 @@ class AlgorithmApplicationTests {
                 return forwardSkipNode.perLevelNext[0];
             } else {
                 return null;
+            }
+        }
+    }
+
+    /**
+     * ############################# 树 #############################
+     */
+
+    /**
+     * ---------------------------- 二叉树遍历 ----------------------------
+     */
+
+    @Data
+    @ToString
+    class TreeNode {
+        private int value;
+
+        private TreeNode left;
+
+        private TreeNode right;
+    }
+
+    /**
+     *  递归前序
+     */
+    public void preOrderRecursion(TreeNode treeNode) {
+        if (treeNode == null) {
+            return;
+        }
+        System.out.println(treeNode.value);
+        preOrderRecursion(treeNode.left);
+        preOrderRecursion(treeNode.right);
+    }
+
+    /**
+     * 递归中序
+     */
+    public void inOrderRecursion(TreeNode treeNode) {
+        if (treeNode == null) {
+            return;
+        }
+        preOrderRecursion(treeNode.left);
+        System.out.println(treeNode.value);
+        preOrderRecursion(treeNode.right);
+    }
+
+    /**
+     * 递归后序
+     */
+    public void postOrderRecursion(TreeNode treeNode) {
+        if (treeNode == null) {
+            return;
+        }
+        preOrderRecursion(treeNode.left);
+        preOrderRecursion(treeNode.right);
+        System.out.println(treeNode.value);
+    }
+
+    /**
+     * 深度
+     */
+    public int deepth(TreeNode treeNode) {
+        if (treeNode == null) {
+            return 0;
+        }
+        return Math.max(deepth(treeNode.left), deepth(treeNode.right));
+    }
+
+    /**
+     * 非递归前序 遍历栈，当前节点不为空：打印 -> 入栈 -> 取左节点；为空：出栈 -> 取右节点
+     */
+    public void preOrder(TreeNode treeNode) {
+        java.util.Stack<TreeNode> stack = new java.util.Stack<>();
+        if (treeNode == null) {
+            return;
+        }
+        while (!stack.isEmpty()) {
+            if (treeNode != null) {
+                System.out.println(treeNode.value);
+                stack.push(treeNode.left);
+                treeNode = treeNode.left;
+            } else {
+                treeNode = stack.pop().right;
+            }
+        }
+    }
+
+    /**
+     * 非递归中序 遍历栈，当前节点不为空： 入栈 -> 取左节点；为空：出栈 -> 打印 -> 取右节点
+     */
+    public void inOrder(TreeNode treeNode) {
+        java.util.Stack<TreeNode> stack = new java.util.Stack<>();
+        if (treeNode == null) {
+            return;
+        }
+        while (!stack.isEmpty()) {
+            if (treeNode != null) {
+                stack.push(treeNode);
+                treeNode = treeNode.left;
+            } else {
+                treeNode = stack.pop();
+                System.out.println(treeNode.value);
+                treeNode = treeNode.right;
+            }
+        }
+    }
+
+    /**
+     * 非递归后序 遍历栈，至于左右节点都被访问过了或者左右节点都为空才可以打印当前节点，否则子节点按照右左的顺序入栈
+     */
+    public void postOrder(TreeNode treeNode) {
+        java.util.Stack<TreeNode> stack = new java.util.Stack<>();
+        if (treeNode == null) {
+            return;
+        }
+        stack.push(treeNode);
+        // 记录上次访问的节点
+        TreeNode previousTreeNode = null;
+        while (!stack.isEmpty()) {
+            treeNode = stack.peek();
+            if ((treeNode.left == null && treeNode.right == null) ||
+                    (previousTreeNode != null && (treeNode.left == previousTreeNode || treeNode.right == previousTreeNode))) {
+                System.out.println(treeNode.value);
+                previousTreeNode = stack.pop();
+            } else {
+                if (treeNode.right != null) {
+                    stack.push(treeNode.right);
+                }
+                if (treeNode.left != null) {
+                    stack.push(treeNode.left);
+                }
+            }
+        }
+    }
+
+    /**
+     * 按层 遍历链表，访问当前节点后将左右节点放入链表中，这样链表中必定按层级顺序存储
+     */
+    public void levelOrder(TreeNode treeNode) {
+        LinkedList<TreeNode> list = new LinkedList<>();
+        list.add(treeNode);
+        while (!list.isEmpty()) {
+            treeNode = list.poll();
+            System.out.println(treeNode.value);
+            if (treeNode.left != null) {
+                list.push(treeNode.left);
+            }
+            if (treeNode.right != null) {
+                list.push(treeNode.right);
             }
         }
     }
