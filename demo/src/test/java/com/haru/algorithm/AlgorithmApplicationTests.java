@@ -6,9 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Stack;
-import java.util.concurrent.LinkedBlockingQueue;
 
 @SpringBootTest
 class AlgorithmApplicationTests {
@@ -781,11 +778,11 @@ class AlgorithmApplicationTests {
      */
 
     /**
-     *   * ---->  * -------------------------------> NULL
-     *   * ---->  * -------------------------------> NULL
+     * * ---->  * -------------------------------> NULL
+     * * ---->  * -------------------------------> NULL
      * -1* ----> 4* ---------------------->  * ----> NULL
-     *   * ---->  * -------------> 8* ----> 9* ----> NULL
-     *   * ---->  * ----> 6* ---->  * ---->  * ----> NULL
+     * * ---->  * -------------> 8* ----> 9* ----> NULL
+     * * ---->  * ----> 6* ---->  * ---->  * ----> NULL
      */
     class SkipList {
         class SkipNode {
@@ -951,7 +948,7 @@ class AlgorithmApplicationTests {
     }
 
     /**
-     *  递归前序
+     * 递归前序
      */
     public void preOrderRecursion(TreeNode treeNode) {
         if (treeNode == null) {
@@ -1077,6 +1074,118 @@ class AlgorithmApplicationTests {
             }
             if (treeNode.right != null) {
                 list.push(treeNode.right);
+            }
+        }
+    }
+
+    /**
+     * ---------------------------- 二叉搜索树 ----------------------------
+     */
+
+    class BinarySearchTree {
+
+        private TreeNode tree;
+
+        public void insert(int value) {
+            TreeNode insertTreeNode = new TreeNode();
+            insertTreeNode.setValue(value);
+            TreeNode treeNode = tree;
+            if (tree == null) {
+                tree = insertTreeNode;
+            } else {
+                while (true) {
+                    if (treeNode.value <= value) {
+                        if (treeNode.right == null) {
+                            treeNode.right = insertTreeNode;
+                            return;
+                        }
+                        treeNode = treeNode.right;
+                    } else {
+                        if (treeNode.left == null) {
+                            treeNode.left = insertTreeNode;
+                            return;
+                        }
+                        treeNode = treeNode.left;
+                    }
+                }
+            }
+        }
+
+        public TreeNode find(int value) {
+            if (tree == null) {
+                return null;
+            }
+            TreeNode treeNode = tree;
+            while (treeNode != null) {
+                if (treeNode.value < value) {
+                    treeNode = tree.right;
+                } else if (treeNode.value > value) {
+                    treeNode = treeNode.left;
+                } else {
+                    return treeNode;
+                }
+            }
+            return null;
+        }
+
+        public void delete(int value) {
+            if (tree == null) {
+                return;
+            }
+
+            if (tree.value == value) {
+                // 删除的是根节点
+                tree = null;
+                return;
+            }
+
+            TreeNode deleteTreeNode = tree;
+            TreeNode deleteTreeNodeParent = null;
+
+            // 查找要删除的节点和其父节点
+            while (deleteTreeNode != null) {
+                deleteTreeNodeParent = deleteTreeNode;
+                if (deleteTreeNode.value < value) {
+                    deleteTreeNode = tree.right;
+                } else if (deleteTreeNode.value > value) {
+                    deleteTreeNode = deleteTreeNode.left;
+                } else {
+                    break;
+                }
+            }
+
+            // 没有找到
+            if (deleteTreeNode == null) {
+                return;
+            }
+
+            // 被删除的节点有左右节点，要从右子树找最小的节点值替换被删除的节点，之后去删除找到的最小节点；从右子树找是为了尽量想完全二叉树靠拢
+            if (deleteTreeNode.left != null && deleteTreeNode.right != null) {
+                TreeNode minTreeNode = deleteTreeNode.right;
+                TreeNode minTreeNodeParent = deleteTreeNode;
+                while (minTreeNode.left != null) {
+                    // 左子树肯定比当前的minTreeNode小
+                    minTreeNodeParent = minTreeNode;
+                    minTreeNode = minTreeNode.left;
+                }
+                deleteTreeNode.value = minTreeNode.value;
+                deleteTreeNode = minTreeNode;
+                deleteTreeNodeParent = minTreeNodeParent;
+            }
+
+            // 查找删除节点的子节点
+            TreeNode childTreeNode = null;
+            if (deleteTreeNode.left != null) {
+                childTreeNode = deleteTreeNode.left;
+            } else if (deleteTreeNode.right != null) {
+                childTreeNode = deleteTreeNode.right;
+            }
+
+            // 判断删除的节点时父节点的左节点还是右节点
+            if (deleteTreeNodeParent.left == deleteTreeNode) {
+                deleteTreeNodeParent.left = childTreeNode;
+            } else {
+                deleteTreeNodeParent.right = childTreeNode;
             }
         }
     }
