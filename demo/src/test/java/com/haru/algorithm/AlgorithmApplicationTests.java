@@ -12,8 +12,6 @@ class AlgorithmApplicationTests {
 
     @Test
     void contextLoads() {
-        int[] items = new int[]{1, 1, 1, 1, 5};
-        System.out.println(quickFindKth(items, 0, items.length - 1, 6));
     }
 
     /**
@@ -264,6 +262,381 @@ class AlgorithmApplicationTests {
         }
     }
 
+    /**
+     * ---------------------------- 二叉搜索树 ----------------------------
+     */
+
+    class BinarySearchTree {
+
+        private TreeNode tree;
+
+        public void insert(int value) {
+            TreeNode insertTreeNode = new TreeNode();
+            insertTreeNode.setValue(value);
+            TreeNode treeNode = tree;
+            if (tree == null) {
+                tree = insertTreeNode;
+            } else {
+                while (true) {
+                    if (treeNode.value <= value) {
+                        if (treeNode.right == null) {
+                            treeNode.right = insertTreeNode;
+                            return;
+                        }
+                        treeNode = treeNode.right;
+                    } else {
+                        if (treeNode.left == null) {
+                            treeNode.left = insertTreeNode;
+                            return;
+                        }
+                        treeNode = treeNode.left;
+                    }
+                }
+            }
+        }
+
+        public TreeNode find(int value) {
+            if (tree == null) {
+                return null;
+            }
+            TreeNode treeNode = tree;
+            while (treeNode != null) {
+                if (treeNode.value < value) {
+                    treeNode = tree.right;
+                } else if (treeNode.value > value) {
+                    treeNode = treeNode.left;
+                } else {
+                    return treeNode;
+                }
+            }
+            return null;
+        }
+
+        public void delete(int value) {
+            if (tree == null) {
+                return;
+            }
+
+            if (tree.value == value) {
+                // 删除的是根节点
+                tree = null;
+                return;
+            }
+
+            TreeNode deleteTreeNode = tree;
+            TreeNode deleteTreeNodeParent = null;
+
+            // 查找要删除的节点和其父节点
+            while (deleteTreeNode != null) {
+                deleteTreeNodeParent = deleteTreeNode;
+                if (deleteTreeNode.value < value) {
+                    deleteTreeNode = tree.right;
+                } else if (deleteTreeNode.value > value) {
+                    deleteTreeNode = deleteTreeNode.left;
+                } else {
+                    break;
+                }
+            }
+
+            // 没有找到
+            if (deleteTreeNode == null) {
+                return;
+            }
+
+            // 被删除的节点有左右节点，要从右子树找最小的节点值替换被删除的节点，之后去删除找到的最小节点；从右子树找是为了尽量想完全二叉树靠拢
+            if (deleteTreeNode.left != null && deleteTreeNode.right != null) {
+                TreeNode minTreeNode = deleteTreeNode.right;
+                TreeNode minTreeNodeParent = deleteTreeNode;
+                while (minTreeNode.left != null) {
+                    // 左子树肯定比当前的minTreeNode小
+                    minTreeNodeParent = minTreeNode;
+                    minTreeNode = minTreeNode.left;
+                }
+                deleteTreeNode.value = minTreeNode.value;
+                deleteTreeNode = minTreeNode;
+                deleteTreeNodeParent = minTreeNodeParent;
+            }
+
+            // 查找删除节点的子节点
+            TreeNode childTreeNode = null;
+            if (deleteTreeNode.left != null) {
+                childTreeNode = deleteTreeNode.left;
+            } else if (deleteTreeNode.right != null) {
+                childTreeNode = deleteTreeNode.right;
+            }
+
+            // 判断删除的节点时父节点的左节点还是右节点
+            if (deleteTreeNodeParent.left == deleteTreeNode) {
+                deleteTreeNodeParent.left = childTreeNode;
+            } else {
+                deleteTreeNodeParent.right = childTreeNode;
+            }
+        }
+    }
+
+    /**
+     * ---------------------------- 跳表 ----------------------------
+     */
+
+    /**
+     * * ---->  * -------------------------------> NULL
+     * * ---->  * -------------------------------> NULL
+     * -1* ----> 4* ---------------------->  * ----> NULL
+     * * ---->  * -------------> 8* ----> 9* ----> NULL
+     * * ---->  * ----> 6* ---->  * ---->  * ----> NULL
+     */
+    class SkipList {
+        class SkipNode {
+            private int value;
+
+            /**
+             * 当前节点占几层
+             */
+            private int maxLevel;
+            /**
+             * 每一层的后继节点
+             */
+            private SkipNode[] perLevelNext;
+
+            public SkipNode(int value, int maxLevel) {
+                this.value = value;
+                this.maxLevel = maxLevel;
+                this.perLevelNext = new SkipNode[maxLevel];
+            }
+
+            public int getValue() {
+                return value;
+            }
+
+            public void setValue(int value) {
+                this.value = value;
+            }
+
+            public int getMaxLevel() {
+                return maxLevel;
+            }
+
+            public void setMaxLevel(int maxLevel) {
+                this.maxLevel = maxLevel;
+            }
+
+            public SkipNode[] getPerLevelNext() {
+                return perLevelNext;
+            }
+
+            public void setPerLevelNext(SkipNode[] perLevelNext) {
+                this.perLevelNext = perLevelNext;
+            }
+        }
+
+        /**
+         * 用于随机生成节点高度
+         */
+        private static final float SKIP_LIST_RANDOM = 0.5f;
+
+        /**
+         * 控制节点最大高度为16
+         */
+        private static final int MAX_LEVEL = 16;
+
+        /**
+         * 跳表高度
+         */
+        private int level;
+
+        /**
+         * 哨兵头节点
+         */
+        private SkipNode head = new SkipNode(-1, MAX_LEVEL);
+
+        /**
+         * 高度每加一概率就减半。因为理论上一层的节点个数都比下一层少一半。
+         *
+         * @return 随机高度
+         */
+        public int randomLevel() {
+            int level = 1;
+            while (Math.random() < SKIP_LIST_RANDOM && level < MAX_LEVEL) {
+                level++;
+            }
+            return level;
+        }
+
+        public void insert(int value) {
+            int i;
+            int randomLevel = randomLevel();
+            SkipNode skipNode = new SkipNode(value, randomLevel);
+
+            SkipNode[] preLevelPreviousSkipNodes = new SkipNode[randomLevel];
+
+            SkipNode forwardSkipNode = head;
+            // 每一层从头节点开始向后遍历，找该节点插入的位置，它的前节点比它小，后节点比它大，也就是找第一个比它大的节点的前一个节点
+            for (i = randomLevel - 1; i >= 0; i--) {
+                while (forwardSkipNode.perLevelNext[i] != null && forwardSkipNode.perLevelNext[i].value < value) {
+                    forwardSkipNode = forwardSkipNode.perLevelNext[i];
+                }
+                // 暂存这一层的前节点
+                preLevelPreviousSkipNodes[i] = forwardSkipNode;
+            }
+            // 然后将该节点在每一层插入
+            for (i = 0; i < randomLevel; i++) {
+                skipNode.perLevelNext[i] = preLevelPreviousSkipNodes[i].perLevelNext[i];
+                preLevelPreviousSkipNodes[i].perLevelNext[i] = skipNode;
+            }
+
+            // 更新跳表高度
+            if (level < randomLevel) {
+                level = randomLevel;
+            }
+        }
+
+        public void delete(int value) {
+            // 删除节点，为了不再去调用find找出节点的最大层数的消耗，直接当成拥有当前跳表的最大层，每层进行判断，通常该节点在某一层不存在时会快速结束
+            SkipNode[] preLevelPreviousSkipNodes = new SkipNode[level + 1];
+            SkipNode forwardSkipNode = head;
+            for (int i = level; i >= 1; i--) {
+                // 删除的值大于跳表中所有的值，forwardSkipNode.perLevelNext[i]会落在最后一个节点上，此时不再要向后查找，直接返回了
+                while (forwardSkipNode.perLevelNext[i] != null && forwardSkipNode.perLevelNext[i].value < value) {
+                    forwardSkipNode = forwardSkipNode.perLevelNext[i];
+                }
+                preLevelPreviousSkipNodes[i] = forwardSkipNode;
+            }
+            // 此时forwardSkipNode落在第一层。若删除的值不在跳表中forwardSkipNode.perLevelNext[0].value != value；
+            // forwardSkipNode.perLevelNext[0] == null要不跳表为空，要不删除的值大于跳表中所有的值
+            if (forwardSkipNode.perLevelNext[0] != null && forwardSkipNode.perLevelNext[0].value == value) {
+                for (int i = level; i >= 0; i--) {
+                    // 每一层的前节点执行当前节点的下一个
+                    preLevelPreviousSkipNodes[i].perLevelNext[i] = preLevelPreviousSkipNodes[i].perLevelNext[i].perLevelNext[i];
+                }
+            }
+            // 更新跳表高度，头节点没一层若是指定NULL的，这一层就是空层
+            while (head.perLevelNext[level] == null) {
+                level--;
+            }
+        }
+
+        public SkipNode find(int value) {
+            SkipNode forwardSkipNode = head;
+            for (int i = level; i >= 0; i++) {
+                while (forwardSkipNode.perLevelNext[i] != null && forwardSkipNode.perLevelNext[i].value < value) {
+                    forwardSkipNode = forwardSkipNode.perLevelNext[i];
+                }
+            }
+            if (forwardSkipNode.perLevelNext[0] != null && forwardSkipNode.perLevelNext[0].value == value) {
+                return forwardSkipNode.perLevelNext[0];
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * ---------------------------- 堆 ----------------------------
+     *  堆中数据的第一个位置为空，便于操作；用数组表示堆，当前下标为i,则左节点的下标为2i，右节点为2i+1，父节点为i/2；叶子节点从n/2到n，
+     *  n表示堆元素个数。
+     */
+    static class Heap {
+        /**
+         * 首位为空
+         */
+        private int[] items;
+
+        /**
+         * 数组的大小，不包括空的首位
+         */
+        private int effectiveCount;
+
+        /**
+         * 堆的大小，是动态变化的
+         */
+        private int heapCount;
+
+        public Heap(int capacity) {
+            items = new int[capacity + 1];
+            effectiveCount = capacity;
+            heapCount = 0;
+        }
+
+        // 插入
+        public void insert(int value) {
+            if (heapCount >= effectiveCount) {
+                return;
+            }
+            items[heapCount++] = value;
+            // 循环的终止条件1、到了根节点；2、当前节点不大于父节点
+            int currentIndex = heapCount;
+            while (currentIndex > 1 && items[currentIndex] > items[currentIndex / 2]) {
+                swap(items, currentIndex, currentIndex / 2);
+                currentIndex = currentIndex / 2;
+            }
+        }
+
+        public static void swap(int[] items, int i, int j) {
+            int temp = items[i];
+            items[i] = items[j];
+            items[j] = temp;
+        }
+
+        // 删除堆顶
+        public void removeTop() {
+            if (heapCount == 0) {
+                return;
+            }
+            items[1] = items[heapCount];
+            heapCount--;
+            sinkNode(items, 1, heapCount);
+        }
+
+        /**
+         * 从上往下堆化
+         *
+         * @param items        原数组
+         * @param currentIndex 当前的下标
+         * @param heapCount    堆的当前大小
+         */
+        public static void sinkNode(int[] items, int currentIndex, int heapCount) {
+            while (true) {
+                int maxIndex = currentIndex;
+                // 左节点存在且小于左节点
+                if (2 * currentIndex <= heapCount && items[currentIndex] < items[2 * currentIndex]) {
+                    maxIndex = 2 * currentIndex;
+                }
+                // 右节点存在且小于右节点
+                if (2 * currentIndex + 1 <= heapCount && items[maxIndex] < items[2 * currentIndex + 1]) {
+                    maxIndex = 2 * currentIndex + 1;
+                }
+                if (currentIndex == maxIndex) {
+                    // 不再交换就结束了
+                    return;
+                }
+                swap(items, currentIndex, maxIndex);
+                currentIndex = maxIndex;
+            }
+        }
+
+        /**
+         * 建堆，要堆化所有非叶子节点
+         *
+         * @param items     元素数组，首位是空
+         * @param heapCount 构建的堆大小，不一定等于数组的实际大小，比如删了几个根节点后排序
+         */
+        public static void arrayToHeap(int[] items, int heapCount) {
+            for (int i = heapCount / 2; i >= 1; i--) {
+                sinkNode(items, i, heapCount);
+            }
+        }
+    }
+
+    /**
+     * ############################# 递归 #############################
+     */
+
+    /**
+     * ---------------------------- 全排列 ----------------------------
+     */
+    public void printPermutations(int[] items, int size, int k) {
+
+    }
 
     /**
      * ############################# 排序 #############################
@@ -325,10 +698,13 @@ class AlgorithmApplicationTests {
     }
 
     /**
-     * ---------------------------- 希尔排序 ---------------------------- 最外层执行step = step / 2，当step ==
-     * 1时是最后一次执行，使用说代码执行多少次step会为1呢，step每次循环都除以2，得到n/2^x=1，x代表除以多少次2结果会得到1， 也就是循环体执行的次数，得到x=log₂n，完成的次数还有+1才结束；所以时间复杂度是O(logn)。
-     * 现在看for的循环体，最好情况是数组已经有序，相当于最里层的for只会执行一次就break了，也就只有一层循环；假设count无穷大，step即使每次除以2，也可以看做是无穷大， 使用for循环每次可以任务是执行了n次，所以时间复杂度是O(nlogn)。
-     * 最坏情况，最里层的for每次都执行个完整的，和外层for一起也就相当于是插入排序了，但for循环受限与step，step每次都是n½，不是整个数组循环， 时间复杂度可以认为是O(n²/n½)=O(n)，再乘上O(logn)，得到的时间复杂度也就是O(nlogn)。
+     * ---------------------------- 希尔排序 ----------------------------
+     * 最外层执行step = step / 2，当step ==1时是最后一次执行，使用说代码执行多少次step会为1呢，step每次循环都除以2，得到n/2^x=1，
+     * x代表除以多少次2结果会得到1， 也就是循环体执行的次数，得到x=log₂n，完成的次数还有+1才结束；所以时间复杂度是O(logn)。
+     * 现在看for的循环体，最好情况是数组已经有序，相当于最里层的for只会执行一次就break了，也就只有一层循环；假设count无穷大，
+     * step即使每次除以2，也可以看做是无穷大， 使用for循环每次可以任务是执行了n次，所以时间复杂度是O(nlogn)。
+     * 最坏情况，最里层的for每次都执行个完整的，和外层for一起也就相当于是插入排序了，但for循环受限与step，step每次都是n½，
+     * 不是整个数组循环， 时间复杂度可以认为是O(n²/n½)=O(n)，再乘上O(logn)，得到的时间复杂度也就是O(nlogn)。
      */
     public void shellSort(int[] items, int count) {
         if (count <= 1) {
@@ -774,166 +1150,6 @@ class AlgorithmApplicationTests {
     }
 
     /**
-     * ############################# 跳表 #############################
-     */
-
-    /**
-     * * ---->  * -------------------------------> NULL
-     * * ---->  * -------------------------------> NULL
-     * -1* ----> 4* ---------------------->  * ----> NULL
-     * * ---->  * -------------> 8* ----> 9* ----> NULL
-     * * ---->  * ----> 6* ---->  * ---->  * ----> NULL
-     */
-    class SkipList {
-        class SkipNode {
-            private int value;
-
-            /**
-             * 当前节点占几层
-             */
-            private int maxLevel;
-            /**
-             * 每一层的后继节点
-             */
-            private SkipNode[] perLevelNext;
-
-            public SkipNode(int value, int maxLevel) {
-                this.value = value;
-                this.maxLevel = maxLevel;
-                this.perLevelNext = new SkipNode[maxLevel];
-            }
-
-            public int getValue() {
-                return value;
-            }
-
-            public void setValue(int value) {
-                this.value = value;
-            }
-
-            public int getMaxLevel() {
-                return maxLevel;
-            }
-
-            public void setMaxLevel(int maxLevel) {
-                this.maxLevel = maxLevel;
-            }
-
-            public SkipNode[] getPerLevelNext() {
-                return perLevelNext;
-            }
-
-            public void setPerLevelNext(SkipNode[] perLevelNext) {
-                this.perLevelNext = perLevelNext;
-            }
-        }
-
-        /**
-         * 用于随机生成节点高度
-         */
-        private static final float SKIP_LIST_RANDOM = 0.5f;
-
-        /**
-         * 控制节点最大高度为16
-         */
-        private static final int MAX_LEVEL = 16;
-
-        /**
-         * 跳表高度
-         */
-        private int level;
-
-        /**
-         * 哨兵头节点
-         */
-        private SkipNode head = new SkipNode(-1, MAX_LEVEL);
-
-        /**
-         * 高度每加一概率就减半。因为理论上一层的节点个数都比下一层少一半。
-         *
-         * @return 随机高度
-         */
-        public int randomLevel() {
-            int level = 1;
-            while (Math.random() < SKIP_LIST_RANDOM && level < MAX_LEVEL) {
-                level++;
-            }
-            return level;
-        }
-
-        public void insert(int value) {
-            int i;
-            int randomLevel = randomLevel();
-            SkipNode skipNode = new SkipNode(value, randomLevel);
-
-            SkipNode[] preLevelPreviousSkipNodes = new SkipNode[randomLevel];
-
-            SkipNode forwardSkipNode = head;
-            // 每一层从头节点开始向后遍历，找该节点插入的位置，它的前节点比它小，后节点比它大，也就是找第一个比它大的节点的前一个节点
-            for (i = randomLevel - 1; i >= 0; i--) {
-                while (forwardSkipNode.perLevelNext[i] != null && forwardSkipNode.perLevelNext[i].value < value) {
-                    forwardSkipNode = forwardSkipNode.perLevelNext[i];
-                }
-                // 暂存这一层的前节点
-                preLevelPreviousSkipNodes[i] = forwardSkipNode;
-            }
-            // 然后将该节点在每一层插入
-            for (i = 0; i < randomLevel; i++) {
-                skipNode.perLevelNext[i] = preLevelPreviousSkipNodes[i].perLevelNext[i];
-                preLevelPreviousSkipNodes[i].perLevelNext[i] = skipNode;
-            }
-
-            // 更新跳表高度
-            if (level < randomLevel) {
-                level = randomLevel;
-            }
-        }
-
-        public void delete(int value) {
-            // 删除节点，为了不再去调用find找出节点的最大层数的消耗，直接当成拥有当前跳表的最大层，每层进行判断，通常该节点在某一层不存在时会快速结束
-            SkipNode[] preLevelPreviousSkipNodes = new SkipNode[level + 1];
-            SkipNode forwardSkipNode = head;
-            for (int i = level; i >= 1; i--) {
-                // 删除的值大于跳表中所有的值，forwardSkipNode.perLevelNext[i]会落在最后一个节点上，此时不再要向后查找，直接返回了
-                while (forwardSkipNode.perLevelNext[i] != null && forwardSkipNode.perLevelNext[i].value < value) {
-                    forwardSkipNode = forwardSkipNode.perLevelNext[i];
-                }
-                preLevelPreviousSkipNodes[i] = forwardSkipNode;
-            }
-            // 此时forwardSkipNode落在第一层。若删除的值不在跳表中forwardSkipNode.perLevelNext[0].value != value；
-            // forwardSkipNode.perLevelNext[0] == null要不跳表为空，要不删除的值大于跳表中所有的值
-            if (forwardSkipNode.perLevelNext[0] != null && forwardSkipNode.perLevelNext[0].value == value) {
-                for (int i = level; i >= 0; i--) {
-                    // 每一层的前节点执行当前节点的下一个
-                    preLevelPreviousSkipNodes[i].perLevelNext[i] = preLevelPreviousSkipNodes[i].perLevelNext[i].perLevelNext[i];
-                }
-            }
-            // 更新跳表高度，头节点没一层若是指定NULL的，这一层就是空层
-            while (head.perLevelNext[level] == null) {
-                level--;
-            }
-        }
-
-        public SkipNode find(int value) {
-            SkipNode forwardSkipNode = head;
-            for (int i = level; i >= 0; i++) {
-                while (forwardSkipNode.perLevelNext[i] != null && forwardSkipNode.perLevelNext[i].value < value) {
-                    forwardSkipNode = forwardSkipNode.perLevelNext[i];
-                }
-            }
-            if (forwardSkipNode.perLevelNext[0] != null && forwardSkipNode.perLevelNext[0].value == value) {
-                return forwardSkipNode.perLevelNext[0];
-            } else {
-                return null;
-            }
-        }
-    }
-
-    /**
-     * ############################# 树 #############################
-     */
-
-    /**
      * ---------------------------- 二叉树遍历 ----------------------------
      */
 
@@ -1079,114 +1295,17 @@ class AlgorithmApplicationTests {
     }
 
     /**
-     * ---------------------------- 二叉搜索树 ----------------------------
+     * 这里堆排序包含了构建一个堆了，堆排序只要将原数组排成一个有序的就行了
      */
-
-    class BinarySearchTree {
-
-        private TreeNode tree;
-
-        public void insert(int value) {
-            TreeNode insertTreeNode = new TreeNode();
-            insertTreeNode.setValue(value);
-            TreeNode treeNode = tree;
-            if (tree == null) {
-                tree = insertTreeNode;
-            } else {
-                while (true) {
-                    if (treeNode.value <= value) {
-                        if (treeNode.right == null) {
-                            treeNode.right = insertTreeNode;
-                            return;
-                        }
-                        treeNode = treeNode.right;
-                    } else {
-                        if (treeNode.left == null) {
-                            treeNode.left = insertTreeNode;
-                            return;
-                        }
-                        treeNode = treeNode.left;
-                    }
-                }
-            }
-        }
-
-        public TreeNode find(int value) {
-            if (tree == null) {
-                return null;
-            }
-            TreeNode treeNode = tree;
-            while (treeNode != null) {
-                if (treeNode.value < value) {
-                    treeNode = tree.right;
-                } else if (treeNode.value > value) {
-                    treeNode = treeNode.left;
-                } else {
-                    return treeNode;
-                }
-            }
-            return null;
-        }
-
-        public void delete(int value) {
-            if (tree == null) {
-                return;
-            }
-
-            if (tree.value == value) {
-                // 删除的是根节点
-                tree = null;
-                return;
-            }
-
-            TreeNode deleteTreeNode = tree;
-            TreeNode deleteTreeNodeParent = null;
-
-            // 查找要删除的节点和其父节点
-            while (deleteTreeNode != null) {
-                deleteTreeNodeParent = deleteTreeNode;
-                if (deleteTreeNode.value < value) {
-                    deleteTreeNode = tree.right;
-                } else if (deleteTreeNode.value > value) {
-                    deleteTreeNode = deleteTreeNode.left;
-                } else {
-                    break;
-                }
-            }
-
-            // 没有找到
-            if (deleteTreeNode == null) {
-                return;
-            }
-
-            // 被删除的节点有左右节点，要从右子树找最小的节点值替换被删除的节点，之后去删除找到的最小节点；从右子树找是为了尽量想完全二叉树靠拢
-            if (deleteTreeNode.left != null && deleteTreeNode.right != null) {
-                TreeNode minTreeNode = deleteTreeNode.right;
-                TreeNode minTreeNodeParent = deleteTreeNode;
-                while (minTreeNode.left != null) {
-                    // 左子树肯定比当前的minTreeNode小
-                    minTreeNodeParent = minTreeNode;
-                    minTreeNode = minTreeNode.left;
-                }
-                deleteTreeNode.value = minTreeNode.value;
-                deleteTreeNode = minTreeNode;
-                deleteTreeNodeParent = minTreeNodeParent;
-            }
-
-            // 查找删除节点的子节点
-            TreeNode childTreeNode = null;
-            if (deleteTreeNode.left != null) {
-                childTreeNode = deleteTreeNode.left;
-            } else if (deleteTreeNode.right != null) {
-                childTreeNode = deleteTreeNode.right;
-            }
-
-            // 判断删除的节点时父节点的左节点还是右节点
-            if (deleteTreeNodeParent.left == deleteTreeNode) {
-                deleteTreeNodeParent.left = childTreeNode;
-            } else {
-                deleteTreeNodeParent.right = childTreeNode;
-            }
+    public void heapSort(int[] items, int heapCount) {
+        Heap.arrayToHeap(items, heapCount);
+        while (heapCount > 1) {
+            // 每次堆顶节点和最后一个节点交换位置，那么后面比是有序的了
+            Heap.swap(items, 1, heapCount);
+            // 交换完之后，不需要再处理数组尾部元素，也就是堆的大小减小；重新堆化剩下的节点
+            Heap.sinkNode(items, heapCount--, heapCount);
         }
     }
+
+
 }
