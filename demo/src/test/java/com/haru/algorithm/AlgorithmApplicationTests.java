@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.LinkedList;
+import java.util.Queue;
 
 @SpringBootTest
 class AlgorithmApplicationTests {
@@ -624,6 +625,36 @@ class AlgorithmApplicationTests {
             for (int i = heapCount / 2; i >= 1; i--) {
                 sinkNode(items, i, heapCount);
             }
+        }
+    }
+
+    /**
+     * ---------------------------- 图 ----------------------------
+     */
+    static class Graph {
+
+        /**
+         * 邻接表，vertexs数组每一项都是个LinkedList，每个LinkedList的第一个是图的顶点，后面接的是它相邻的顶点；每个邻接叫做一个边
+         */
+        private static LinkedList<Integer> vertexs[];
+
+        public static int vertexCount;
+
+        @SuppressWarnings("unchecked")
+        public Graph(int vertexCount) {
+            this.vertexCount = vertexCount;
+            this.vertexs = new LinkedList[vertexCount];
+            for (int i = 0; i < vertexCount; i++) {
+                vertexs[i] = new LinkedList<>();
+            }
+        }
+
+        /**
+         * 无向图。为了便于处理，顶点的值就是顶点的下标；所以我们要就所以顶点都顺序编号，vertexs只存编号，相当于是值的key
+         */
+        public void insert(int startVertex, int endVertex) {
+            vertexs[startVertex].add(endVertex);
+            vertexs[endVertex].add(startVertex);
         }
     }
 
@@ -1307,5 +1338,106 @@ class AlgorithmApplicationTests {
         }
     }
 
+    /**
+     * ---------------------------- 搜索 ----------------------------
+     */
 
+    /**
+     * ---------------------------- 广度优先算法 ----------------------------
+     */
+
+    /**
+     * 此算法只找一个最短的路径
+     */
+    public void bfs(int start, int end) {
+        if (start == end) {
+            return;
+        }
+        // 用于记录访问过的顶点
+        boolean[] visitedVertexs = new boolean[Graph.vertexCount];
+        // 记录每个顶点的前驱顶点，用于路径回退打印，数组的下标表示当前顶点，值表示当前顶点的前驱顶点
+        Integer[] previousVertex = new Integer[Graph.vertexCount];
+        // 存放相邻顶点。广度要求相邻顶点访问玩以后才可以接着访问相邻顶点的相邻顶点
+        Queue<Integer> adjacentVertexQueue = new LinkedList<>();
+        visitedVertexs[start] = true;
+        adjacentVertexQueue.add(start);
+        // 遍历完所有顶点
+        while (adjacentVertexQueue.size() != 0) {
+            Integer currentVertex = adjacentVertexQueue.poll();
+            // 遍历当前顶点的后续顶点
+            for (int i = 0; i < Graph.vertexs[currentVertex].size(); i++) {
+                Integer adjacentVertex = Graph.vertexs[currentVertex].get(i);
+                // 判读相邻的这个顶点有没有被访问过
+                if (!visitedVertexs[adjacentVertex]) {
+                    // 记录相邻顶点的前驱顶点
+                    previousVertex[adjacentVertex] = currentVertex;
+                    if (adjacentVertex == end) {
+                        // 如果找到了终止顶点就打印返回
+                        print(previousVertex, start, end);
+                        return;
+                    }
+                    // 此时就是被访问了
+                    visitedVertexs[adjacentVertex] = true;
+                    // 添加到队列中
+                    adjacentVertexQueue.add(adjacentVertex);
+                }
+            }
+        }
+    }
+
+    /**
+     * 递归打印，回退查找
+     */
+    public void print(Integer[] previousVertex, int start, int end) {
+        // 当回退到end等于start时开始打印
+        if (start != end) {
+            print(previousVertex, start, previousVertex[end]);
+        }
+        System.out.print(end + " ");
+    }
+
+    /**
+     * ---------------------------- 深度优先算法 ----------------------------
+     */
+
+    /**
+     * 是否已经找到了终止顶点，true找到就开始打印
+     */
+    public boolean found = false;
+
+    boolean[] visitedVertexs = new boolean[Graph.vertexCount];
+    Integer[] previousVertex = new Integer[Graph.vertexCount];
+
+    public void dfs(int start, int end) {
+        recursionDFS(start, end);
+        print(previousVertex, start, end);
+    }
+
+    /**
+     * 深度使用了回溯的思想，回溯非常适合用递归来实现。深度先顺着一条路走到头，没有找到就要返回找其他路；递归正是这样，一个递归链没有
+     * 找到递归就结束，返回递归链时继续选择另一个递归链
+     */
+    public void recursionDFS(int start, int end) {
+        if (found) {
+            return;
+        }
+        // 确定终止顶点，路径每次递归缩短，使用起始顶点每次都发生变化
+        if (start == end) {
+            found = true;
+            return;
+        }
+        // 遍历相邻顶点
+        for (int i = 0; i < Graph.vertexs[start].size(); i++) {
+            Integer adjacentVertex = Graph.vertexs[start].get(i);
+            // 判断有没有被访问过
+            if (!visitedVertexs[adjacentVertex]) {
+                // 设置前驱顶点
+                previousVertex[adjacentVertex] = start;
+                // 设置了前驱顶点之后就算被访问过了
+                visitedVertexs[adjacentVertex] = true;
+                // 递归
+                recursionDFS(adjacentVertex, end);
+            }
+        }
+    }
 }
