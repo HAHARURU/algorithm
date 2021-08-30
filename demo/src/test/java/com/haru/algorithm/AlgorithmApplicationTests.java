@@ -1485,9 +1485,9 @@ class AlgorithmApplicationTests {
         int originCurrentIndex = 0;
         // 源串下标只需遍历到originLength - patternLength的位置，后面遍历时会加上模式串的下标
         while (originCurrentIndex <= originLength - patternLength) {
-            int patternCurrentIndex;
+            int patternCurrentIndex = patternLength - 1;
             // 模式串从后往前匹配
-            for (patternCurrentIndex = patternLength - 1; patternCurrentIndex >= 0; --patternCurrentIndex) {
+            for (; patternCurrentIndex >= 0; patternCurrentIndex--) {
                 // 比较模式串当前位置和对应的源串的位置
                 if (origin[originCurrentIndex + patternCurrentIndex] != pattern[patternCurrentIndex]) {
                     // 坏字符就不用再往回遍历模式串了
@@ -1521,12 +1521,12 @@ class AlgorithmApplicationTests {
     private Integer getOriginJumpDistantWithGoodStringRule(int patternCurrentIndex, int patternLength, int[] publicSubStringBackIndex, boolean[] publicSubStringBackIsMatchPrefix) {
         int publicSubStringLength = patternLength - 1 - patternCurrentIndex; // 好后缀长度
         // 如果能从模式串找到除当前匹配的公共子串的另一个子串就直接返回
-        if (publicSubStringBackIndex[publicSubStringLength] != -1) {
+        if (publicSubStringBackIndex[publicSubStringLength] > -1) {
             // 这里加1是将patternCurrentIndex的下一个下标对齐
             return patternCurrentIndex - publicSubStringBackIndex[publicSubStringLength] + 1;
         }
         // 查找后缀子串，要跳过坏字符的下一个，从下下个开始才算是子串
-        for (int prefixSubStringIndex = patternCurrentIndex + 2; prefixSubStringIndex <= patternLength - 1; ++prefixSubStringIndex) {
+        for (int prefixSubStringIndex = patternCurrentIndex + 2; prefixSubStringIndex <= patternLength - 1; prefixSubStringIndex++) {
             if (publicSubStringBackIsMatchPrefix[patternLength - prefixSubStringIndex]) {
                 // 后缀子串匹配模式串前缀子串，返回当前后缀子串的下标；
                 // 因为前缀子串是模式串的开头，要将其移动到后缀子串的位置和源串对齐，相当于直接移动了后缀子串下标数值的距离
@@ -1541,17 +1541,15 @@ class AlgorithmApplicationTests {
      *
      * @param pattern                          模式串
      * @param patternLength                    模式串长度
-     * @param publicSubStringBackIndex         数组的下标是公共子串的长度，值是除模式串后缀子串往回找到的第一个字符发起始下标
+     * @param publicSubStringBackIndex         数组的下标是公共子串的长度，用长度是因为，后缀子串是固定的，值是除模式串后缀子串往回找到的第一个字符发起始下标
      * @param publicSubStringBackIsMatchPrefix 公共子串是否匹配模式串的前缀子串
      */
     private void generatePublicSubString(char[] pattern, int patternLength, int[] publicSubStringBackIndex, boolean[] publicSubStringBackIsMatchPrefix) {
-        // 因为是找【子】串，所以不包括最后一个字符
-        for (int i = 0; i < patternLength - 1; ++i) {
-            publicSubStringBackIndex[i] = -1;
-            publicSubStringBackIsMatchPrefix[i] = false;
-        }
+
         // 遍历模式串每个字符
         for (int i = 0; i < patternLength - 1; ++i) {
+            // 默认都是-1，代表找不到
+            publicSubStringBackIndex[i] = -1;
             int currentIndex = i;
             int publicSubStringLength = 1;
             //  从模式串当前下标往回遍历每个字符，公共子串是每次重新从模式串尾往回遍历，
@@ -1562,7 +1560,7 @@ class AlgorithmApplicationTests {
             }
             // currentIndex为-1时表示一直匹配到了模式串的第一个字符了，也就是公共字符能匹配到模式串的前缀子串
             if (currentIndex == -1) {
-                publicSubStringBackIsMatchPrefix[publicSubStringLength] = true;
+                publicSubStringBackIsMatchPrefix[publicSubStringLength - 1] = true;
             }
         }
     }
