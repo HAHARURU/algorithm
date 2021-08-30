@@ -1440,4 +1440,144 @@ class AlgorithmApplicationTests {
             }
         }
     }
+
+    /**
+     * ############################# 字符串匹配 #############################
+     */
+
+    /**
+     * ---------------------------- BM ----------------------------
+     */
+
+    /**
+     * 将字符转成ASCII码，所以又256种不同的值
+     */
+    private static final int SIZE = 256;
+
+    /**
+     *  a b c b d a b c
+     *  b d a
+     *        b d a
+     *
+     *  a b c b d a b c
+     *  c b d
+     *      c b d
+     *
+     *  d a b c b c a b c
+     *  c b c a b c
+     *        c b c a b c
+     *
+     *  b c b c a b c
+     *  c a b c
+     *        c a b c
+     *  从后向前进遍历模式串和源串的字符进行匹配。
+     *  从源串上找到的一个坏字符，其后面有好字符串的话，若好字符串是否匹配模式串另一个子串{u*}，则将模式串移动到{u*}和源串好字符串对齐；
+     *  若没有{u*}，判断好字符串的后缀子串是否和模式串的前缀子串有匹配，有将模式串移动到前缀子串和好字符串的后缀子串对齐；
+     *  若也没有，则找坏字符在模式串上向左查找下一个匹配的下标，将该下标移动到和坏字符对齐；没有则移动模式串到坏字符之后；
+     *  重复以上操作直到找到匹配或模式串滑到最后。
+     */
+    public int bm(char[] origin, int originLength, char[] pattern, int patternLength) {
+        int[] patternLastIndexHashTable = generatePatternLastIndexHashTable(pattern, patternLength);
+        int[] publicSubStringBackIndex = new int[patternLength];
+        boolean[] publicSubStringBackIsMatchPrefix = new boolean[patternLength];
+        generatePublicSubString(pattern, patternLength, publicSubStringBackIndex, publicSubStringBackIsMatchPrefix);
+
+        int originCurrentIndex = 0;
+        // 源串下标只需遍历到originLength - patternLength的位置，后面遍历时会加上模式串的下标
+        while (originCurrentIndex <= originLength - patternLength) {
+            int patternCurrentIndex;
+            // 模式串从后往前匹配
+            for (patternCurrentIndex = patternLength - 1; patternCurrentIndex >= 0; --patternCurrentIndex) {
+                // 比较模式串当前位置和对应的源串的位置
+                if (origin[originCurrentIndex + patternCurrentIndex] != pattern[patternCurrentIndex]) {
+                    // 坏字符就不用再往回遍历模式串了
+                    break;
+                }
+            }
+            if (patternCurrentIndex < 0) {
+                // 遍历完模式串了匹配成功
+                return originCurrentIndex;
+            }
+
+            Integer originJumpDistantWithGoodStringRule = null;
+            if (patternCurrentIndex < patternLength - 1) {
+                // 当前模式串位置不是尾，那么后面必定是已经匹配上的，也就是有好串
+                originJumpDistantWithGoodStringRule = getOriginJumpDistantWithGoodStringRule(patternCurrentIndex, patternLength, publicSubStringBackIndex, publicSubStringBackIsMatchPrefix);
+            }
+            if (originJumpDistantWithGoodStringRule != null) {
+                originCurrentIndex += originJumpDistantWithGoodStringRule;
+            } else {
+                // 计算出的是只有坏字符规则时应该向后滑到到的距离，其实就是操纵源串的当前下标位置；
+                // 从patternLastIndexHashTable查出源串上当前字符在模式串上的最后位置，没有找到返回的是-1；
+                // 用当前模式串的下标减去上面的值就是源串下标要跳的距离。
+                // 相对的来说，假设模式串是固定的，源串的移动的，那么模式串要向右移动的距离就是源串向左移动的距离；
+                // 再假设源串是固定的，那么移动的就是originCurrentIndex，也就是向右移动
+                originCurrentIndex += patternCurrentIndex - patternLastIndexHashTable[(int) origin[originCurrentIndex + patternCurrentIndex]];
+            }
+        }
+        return -1;
+    }
+
+    private Integer getOriginJumpDistantWithGoodStringRule(int patternCurrentIndex, int patternLength, int[] publicSubStringBackIndex, boolean[] publicSubStringBackIsMatchPrefix) {
+        int publicSubStringLength = patternLength - 1 - patternCurrentIndex; // 好后缀长度
+        // 如果能从模式串找到除当前匹配的公共子串的另一个子串就直接返回
+        if (publicSubStringBackIndex[publicSubStringLength] != -1) {
+            // 这里加1是将patternCurrentIndex的下一个下标对齐
+            return patternCurrentIndex - publicSubStringBackIndex[publicSubStringLength] + 1;
+        }
+        // 查找后缀子串，要跳过坏字符的下一个，从下下个开始才算是子串
+        for (int prefixSubStringIndex = patternCurrentIndex + 2; prefixSubStringIndex <= patternLength - 1; ++prefixSubStringIndex) {
+            if (publicSubStringBackIsMatchPrefix[patternLength - prefixSubStringIndex]) {
+                // 后缀子串匹配模式串前缀子串，返回当前后缀子串的下标；
+                // 因为前缀子串是模式串的开头，要将其移动到后缀子串的位置和源串对齐，相当于直接移动了后缀子串下标数值的距离
+                return prefixSubStringIndex;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 初始化goodStringNextIndexOnPattern和goodsStringIsMatchPrefixOnPattern 源串的好字符串也就是模式串的后缀子串（称为公共子串），所以可以提前构建模式串的后缀子串和往回第一个匹配的子串的位置对于关系
+     *
+     * @param pattern                          模式串
+     * @param patternLength                    模式串长度
+     * @param publicSubStringBackIndex         数组的下标是公共子串的长度，值是除模式串后缀子串往回找到的第一个字符发起始下标
+     * @param publicSubStringBackIsMatchPrefix 公共子串是否匹配模式串的前缀子串
+     */
+    private void generatePublicSubString(char[] pattern, int patternLength, int[] publicSubStringBackIndex, boolean[] publicSubStringBackIsMatchPrefix) {
+        // 因为是找【子】串，所以不包括最后一个字符
+        for (int i = 0; i < patternLength - 1; ++i) {
+            publicSubStringBackIndex[i] = -1;
+            publicSubStringBackIsMatchPrefix[i] = false;
+        }
+        // 遍历模式串每个字符
+        for (int i = 0; i < patternLength - 1; ++i) {
+            int currentIndex = i;
+            int publicSubStringLength = 1;
+            //  从模式串当前下标往回遍历每个字符，公共子串是每次重新从模式串尾往回遍历，
+            while (currentIndex >= 0 && pattern[currentIndex] == pattern[patternLength - publicSubStringLength]) {
+                // 由于尾子串是固定的，使用相同长度的公共子串对应的BackIndex比会被更新成最新的；
+                // 且随着迭代增加，公共子串的长度也再增加，所以每次都会产生新的对应值
+                publicSubStringBackIndex[publicSubStringLength++] = currentIndex--;
+            }
+            // currentIndex为-1时表示一直匹配到了模式串的第一个字符了，也就是公共字符能匹配到模式串的前缀子串
+            if (currentIndex == -1) {
+                publicSubStringBackIsMatchPrefix[publicSubStringLength] = true;
+            }
+        }
+    }
+
+    /**
+     * 用散列表记录模式串中每个字符ASCII码最后出现在模式串的位置，用于坏字符快速查找到其在模式串匹配的下个位置
+     */
+    private int[] generatePatternLastIndexHashTable(char[] pattern, int patternLength) {
+        int[] patternLastIndexHashTable = new int[SIZE];
+        for (int i = 0; i < SIZE; ++i) {
+            patternLastIndexHashTable[i] = -1;
+        }
+        for (int i = 0; i < patternLength; ++i) {
+            patternLastIndexHashTable[pattern[i]] = i;
+        }
+        return patternLastIndexHashTable;
+    }
 }
