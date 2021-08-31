@@ -1578,4 +1578,112 @@ class AlgorithmApplicationTests {
         }
         return patternLastIndexHashTable;
     }
+
+    /**
+     * ---------------------------- KMP ----------------------------
+     */
+
+    /**
+     *
+     */
+    public static int kmp(char[] origin, int originLength, char[] pattern, int patternLength) {
+        int[] suffixMatchPrefixLastIndexArray = getSuffixMatchPrefixLastIndexArray(pattern, patternLength);
+        int j = 0;
+        for (int currentOriginIndex = 0; currentOriginIndex < originLength; currentOriginIndex++) {
+            while (j > 0 && origin[currentOriginIndex] != pattern[j]) { // 一直找到a[currentOriginIndex]和b[j]
+                j = suffixMatchPrefixLastIndexArray[j - 1] + 1;
+            }
+            if (origin[currentOriginIndex] == pattern[j]) {
+                ++j;
+            }
+            if (j == patternLength) { // 找到匹配模式串的了
+                return currentOriginIndex - patternLength + 1;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 源串的好前缀的最长可匹配前缀和后缀子串可以用模式串来替代，用一个数组suffixMatchPrefixLastIndexArray来提前存储，
+     * suffixMatchPrefixLastIndexArray的下标表示模式串每个前缀子串的终止下标也可以说是前缀子串长度-1，
+     * 值是这个前缀子串的后缀子串在模式串上所能匹配的最长的前缀子串的终止下标，没有设为-1。
+     * suffixMatchPrefixLastIndexArray[i] = k 也可以表示为pattern[0,i]，使得前k个字符恰等于后k个字符的最大的长度
+     * 求suffixMatchPrefixLastIndexArray[i]所能匹配的最大前缀子串的下标要先求suffixMatchPrefixLastIndexArray[i-1]的；
+     * 比如suffixMatchPrefixLastIndexArray[i-1]=y,也就是说pattern[0,y]仅和pattern[r,i-1]相等，比r小的下标已经不和0下标相等了，
+     * 所以现在求suffixMatchPrefixLastIndexArray[i]的值也只能是pattern[0,y+1]和pattern[r,i]相等，也就是判断pattern[y+1]==pattern[i]即可；
+     * 当pattern[y+1]!=pattern[i]时，我们只能找其他办法；假设pattern[0,i]最长匹配后缀子串是pattern[x,i]，
+     * 同时这也可以算做是pattern[0,i-1]一个可匹配的后缀子串，但不一定是最大的，叫做次长可匹配的后缀子串，pattern[x,i-1]和pattern[0,i-1-x]匹配，
+     * 那么只要pattern[i-x]==pattern[i]，得到pattern[x,i]就是pattern[0,i]最长匹配后缀子串；此外，次长的可匹配的后缀子串肯定被最长可匹配的后缀子串包含了，
+     * 最长可匹配后缀子串对应最长可匹配前缀子串是pattern[0, y]，suffixMatchPrefixLastIndexArray[i-1]=y，意思是说次长的后缀子串等于次长前缀子串，
+     * 也就是说在pattern[0, y]=pattern[r, i-1]相等，要找pattern[0, 次<y]=pattern[次>r, i-1]，
+     * 而且还发现了pattern[0, 次<y]、pattern[次>r, i-1]分别被pattern[0, y]、pattern[r, i-1]包含，这也就变成了在pattern[0, y]找前后缀相同的长度s，
+     * s也可以说是可匹配的前缀子串的终止下标，
+     * 假设suffixMatchPrefixLastIndexArray[i-1] = j，j就是我们现在要的y；
+     * 然后就变成了在pattern[0, j]中查找最长匹配前后缀子串，也就是suffixMatchPrefixLastIndexArray[suffixMatchPrefixLastIndexArray[i-1]]
+     */
+    private static int[] getSuffixMatchPrefixLastIndexArray(char[] pattern, int patternLength) {
+        int[] suffixMatchPrefixLastIndexArray = new int[patternLength];
+        suffixMatchPrefixLastIndexArray[0] = -1; // 长度为1的子串不存在子串了，直接设为-1
+        int suffixMatchPrefixLastIndex = -1;    // 这个值承担了三个角色
+        for (int currentPatternIndex = 1; currentPatternIndex < patternLength; currentPatternIndex++) {
+            // suffixMatchPrefixLastIndex在循环前就是suffixMatchPrefixLastIndexArray[i-1]的值，-1表示i的前一个i-1没有匹配到前缀子串；
+            // 当suffixMatchPrefixLastIndexArray[i-1] > -1时，可进行判断pattern[y+1]==pattern[i]，这里的y就是suffixMatchPrefixLastIndexArray[i-1]，也就是suffixMatchPrefixLastIndex
+            while (suffixMatchPrefixLastIndex != -1 && pattern[suffixMatchPrefixLastIndex + 1] != pattern[currentPatternIndex]) {
+                // 如果pattern[y+1]!=pattern[i]，找pattern[0,i-1]次长的可匹配的后缀子串，次长的也按照比较下一个位置字符来确定i的最长匹配后缀子串
+                suffixMatchPrefixLastIndex = suffixMatchPrefixLastIndexArray[suffixMatchPrefixLastIndex];
+            }
+            // 按理说下个字符相等的话就算找到了匹配的子串，suffixMatchPrefixLastIndex应该就加1，但是有可能是因为suffixMatchPrefixLastIndex=-1到这里的，
+            // 所有这里要特殊的和模式串下标是0的值比较一下；特殊处理的就是最长匹配子串是1的情况。
+            if (pattern[suffixMatchPrefixLastIndex + 1] == pattern[currentPatternIndex]) {
+                suffixMatchPrefixLastIndex++;
+            }
+            suffixMatchPrefixLastIndexArray[currentPatternIndex] = suffixMatchPrefixLastIndex;
+        }
+        return suffixMatchPrefixLastIndexArray;
+    }
+
+    /**
+     * ---------------------------- Trie树 ----------------------------
+     */
+
+    public class Trie {
+        private TrieNode root = new TrieNode('/'); // 存储无意义字符
+
+        // 往Trie树中插入一个字符串
+        public void insert(char[] text) {
+            TrieNode p = root;
+            for (int i = 0; i < text.length; ++i) {
+                int index = text[i] - 'a';
+                if (p.children[index] == null) {
+                    TrieNode newNode = new TrieNode(text[i]);
+                    p.children[index] = newNode;
+                }
+                p = p.children[index];
+            }
+            p.isEndingChar = true;
+        }
+
+        // 在Trie树中查找一个字符串
+        public boolean find(char[] pattern) {
+            TrieNode p = root;
+            for (int i = 0; i < pattern.length; ++i) {
+                int index = pattern[i] - 'a';
+                if (p.children[index] == null) {
+                    return false; // 不存在pattern
+                }
+                p = p.children[index];
+            }
+            if (!p.isEndingChar) return false; // 不能完全匹配，只是前缀
+            else return true; // 找到pattern
+        }
+
+        public class TrieNode {
+            public char data;
+            public TrieNode[] children = new TrieNode[26];
+            public boolean isEndingChar = false;
+            public TrieNode(char data) {
+                this.data = data;
+            }
+        }
+    }
 }
