@@ -1646,44 +1646,50 @@ class AlgorithmApplicationTests {
      * ---------------------------- Trie树 ----------------------------
      */
 
+    public class TrieTreeNode {
+        private char data;
+        /**
+         * 后续字符
+         */
+        private TrieTreeNode[] children = new TrieTreeNode[26];
+        public boolean isEndingChar = false;
+        public TrieTreeNode(char data) {
+            this.data = data;
+        }
+    }
+
     public class Trie {
-        private TrieNode root = new TrieNode('/'); // 存储无意义字符
+        // 根节点
+        private TrieTreeNode root = new TrieTreeNode('/');
 
-        // 往Trie树中插入一个字符串
         public void insert(char[] text) {
-            TrieNode p = root;
-            for (int i = 0; i < text.length; ++i) {
-                int index = text[i] - 'a';
-                if (p.children[index] == null) {
-                    TrieNode newNode = new TrieNode(text[i]);
-                    p.children[index] = newNode;
+            TrieTreeNode currentTrieTreeNode = root;
+            for (char aText : text) {
+                int index = aText - 'a';
+                if (currentTrieTreeNode.children[index] == null) {
+                    // 没有该字符，就新增一个节点
+                    currentTrieTreeNode.children[index] = new TrieTreeNode(aText);
                 }
-                p = p.children[index];
+                // 更新当前节点到子节点上
+                currentTrieTreeNode = currentTrieTreeNode.children[index];
             }
-            p.isEndingChar = true;
+            // 字符串末尾字符标识
+            currentTrieTreeNode.isEndingChar = true;
         }
 
-        // 在Trie树中查找一个字符串
         public boolean find(char[] pattern) {
-            TrieNode p = root;
-            for (int i = 0; i < pattern.length; ++i) {
-                int index = pattern[i] - 'a';
-                if (p.children[index] == null) {
-                    return false; // 不存在pattern
+            TrieTreeNode currentTrieTreeNode = root;
+            for (char aPattern : pattern) {
+                int index = aPattern - 'a';
+                // 若当前的字符不存在该节点的子字符散列表中，匹配失败
+                if (currentTrieTreeNode.children[index] == null) {
+                    return false;
                 }
-                p = p.children[index];
+                // 继续比较下一个字符
+                currentTrieTreeNode = currentTrieTreeNode.children[index];
             }
-            if (!p.isEndingChar) return false; // 不能完全匹配，只是前缀
-            else return true; // 找到pattern
-        }
-
-        public class TrieNode {
-            public char data;
-            public TrieNode[] children = new TrieNode[26];
-            public boolean isEndingChar = false;
-            public TrieNode(char data) {
-                this.data = data;
-            }
+            // isEndingChar为false的话就表示只是前缀字符串
+            return currentTrieTreeNode.isEndingChar;
         }
     }
 }
