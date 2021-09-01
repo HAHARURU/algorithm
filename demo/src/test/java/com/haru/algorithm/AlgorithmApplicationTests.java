@@ -1584,19 +1584,26 @@ class AlgorithmApplicationTests {
      */
 
     /**
-     *
+     * 模式串从前向后遍历和源串比较，当发现有个字符不相等时，看前面有多少个匹配的字符，称为好串，若在这个好串中，模式串的前缀子串和源串的好串后缀子串有匹配的，
+     * 我们可以向后移动模式串，让其对齐重新比较
      */
-    public static int kmp(char[] origin, int originLength, char[] pattern, int patternLength) {
+    public int kmp(char[] origin, int originLength, char[] pattern, int patternLength) {
         int[] suffixMatchPrefixLastIndexArray = getSuffixMatchPrefixLastIndexArray(pattern, patternLength);
-        int j = 0;
+        int currentPatternIndex = 0;
         for (int currentOriginIndex = 0; currentOriginIndex < originLength; currentOriginIndex++) {
-            while (j > 0 && origin[currentOriginIndex] != pattern[j]) { // 一直找到a[currentOriginIndex]和b[j]
-                j = suffixMatchPrefixLastIndexArray[j - 1] + 1;
+            // 一直找到源串和模式串不相符的一个字符，那么前面的就是好串，currentPatternIndex回到0时结束循环，因为模式串已经没有好前缀子串了，没法再用suffixMatchPrefixLastIndexArray查找了
+            while (currentPatternIndex > 0 && origin[currentOriginIndex] != pattern[currentPatternIndex]) {
+                // 将模式串好前缀子串很源串的前缀好子串的后缀子串对齐，也相当于回退currentPatternIndex下标，
+                // currentPatternIndex - 1就是当前模式串好前缀子串的最大子串长度，从suffixMatchPrefixLastIndexArray中找当前最大匹配子串的下标，
+                // +1让最大匹配前缀子串的下一个字符对齐源串当前位置
+                currentPatternIndex = suffixMatchPrefixLastIndexArray[currentPatternIndex - 1] + 1;
             }
-            if (origin[currentOriginIndex] == pattern[j]) {
-                ++j;
+            // 同样这里可能是currentPatternIndex被设回了0，上面的while就没有进行源串和模式串字符等值判断，所以这里再判断一次有可能是相等的，特别处理下模式串的第一个字符
+            if (origin[currentOriginIndex] == pattern[currentPatternIndex]) {
+                // 继续判断模式串下一个字符
+                currentPatternIndex++;
             }
-            if (j == patternLength) { // 找到匹配模式串的了
+            if (currentPatternIndex == patternLength) {
                 return currentOriginIndex - patternLength + 1;
             }
         }
@@ -1621,11 +1628,11 @@ class AlgorithmApplicationTests {
      * 假设suffixMatchPrefixLastIndexArray[i-1] = j，j就是我们现在要的y；
      * 然后就变成了在pattern[0, j]中查找最长匹配前后缀子串，也就是suffixMatchPrefixLastIndexArray[suffixMatchPrefixLastIndexArray[i-1]]
      */
-    private static int[] getSuffixMatchPrefixLastIndexArray(char[] pattern, int patternLength) {
+    private int[] getSuffixMatchPrefixLastIndexArray(char[] pattern, int patternLength) {
         int[] suffixMatchPrefixLastIndexArray = new int[patternLength];
         suffixMatchPrefixLastIndexArray[0] = -1; // 长度为1的子串不存在子串了，直接设为-1
         int suffixMatchPrefixLastIndex = -1;    // 这个值承担了三个角色
-        for (int currentPatternIndex = 1; currentPatternIndex < patternLength; currentPatternIndex++) {
+        for (int currentPatternIndex = 1; currentPatternIndex < patternLength - 1; currentPatternIndex++) {
             // suffixMatchPrefixLastIndex在循环前就是suffixMatchPrefixLastIndexArray[i-1]的值，-1表示i的前一个i-1没有匹配到前缀子串；
             // 当suffixMatchPrefixLastIndexArray[i-1] > -1时，可进行判断pattern[y+1]==pattern[i]，这里的y就是suffixMatchPrefixLastIndexArray[i-1]，也就是suffixMatchPrefixLastIndex
             while (suffixMatchPrefixLastIndex != -1 && pattern[suffixMatchPrefixLastIndex + 1] != pattern[currentPatternIndex]) {

@@ -10,6 +10,4 @@ class AlgorithmTests {
     void contextLoads() {
 
     }
-
-
 }
