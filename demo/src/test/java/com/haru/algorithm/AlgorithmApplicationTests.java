@@ -1667,7 +1667,7 @@ class AlgorithmApplicationTests {
         private int length;
 
         /**
-         * 失败指针，
+         * 失败指针
          */
         private TrieTreeACNode failTrieTreeACNode;
 
@@ -1680,9 +1680,9 @@ class AlgorithmApplicationTests {
         // 根节点
         private TrieTreeACNode root = new TrieTreeACNode('/');
 
-        public void insert(char[] text) {
+        public void insert(char[] pattern) {
             TrieTreeACNode currentTrieTreeACNode = root;
-            for (char aText : text) {
+            for (char aText : pattern) {
                 int index = aText - 'a';
                 if (currentTrieTreeACNode.children[index] == null) {
                     // 没有该字符，就新增一个节点
@@ -1693,6 +1693,7 @@ class AlgorithmApplicationTests {
             }
             // 字符串末尾字符标识
             currentTrieTreeACNode.isEndingChar = true;
+            currentTrieTreeACNode.length = pattern.length;
         }
 
         public void buildFailTrieTreeACode() {
@@ -1718,7 +1719,7 @@ class AlgorithmApplicationTests {
                             // 判断当前节点的失败指针指向的节点的子节点是否有当前子节点相同的值，就是取当前子节点的上层去找
                             TrieTreeACNode failNode = currentNodeFail.children[currentChildrenNode.data - 'a'];
                             if (failNode != null) {
-                                // 有相同的，就该子节点的fail
+                                // 有相同的，就为该子节点的fail
                                 currentChildrenNode.failTrieTreeACNode = failNode;
                                 break;
                             }
@@ -1750,23 +1751,58 @@ class AlgorithmApplicationTests {
             return currentTrieTreeACNode.isEndingChar;
         }
 
+        /**
+         *                  root
+         *                 / | \
+         *               s   h  e
+         *             /    |    \
+         *           h    ②e     k
+         *         /       |
+         *     ①e       ③k
+         *     /
+         *   j
+         *   假设有如上Trie树，当前的节点在①出，但是它的子节点K没能和源串此时的字符匹配上。
+         *   但是可以发现she已经是匹配上的，所以he和e也是匹配上的，那么可以用这个后缀去其他树枝上查找出其他的模式串，
+         *   要得到此时的she的最大后缀匹配模式串的位置，应该已经知道he的了，同理也知道e的了；
+         *   用一个指针来指向此时节点最大后缀匹配的其他模式串的位置叫做fail；还可以认为根节点的fail指向null，一方面是为了条件终止，
+         *   另一方面也可以代表没有找到匹配的模式串位置；根节点的直接子节点的fail都是根节点；
+         *   由回溯思想可以得到此时的fail，也就是说he的fail指向的节点的子节点要有等于此时节点的，那么就找到当前节点的fail了。
+         *   那当我们进行匹配时，在①处发生了失配，我们就去找它的fail指向的节点，也就是②处，若②处的子节点有等于当前源串字符的，
+         *   我们就重新设置当前位置到③处；然后从这个位置开始：1、判断它是不是终止节点，是就可以进行替换；2、继续找更小的后缀字串匹配的模式串。
+         */
         public void match(char[] text) {
-            int n = text.length;
-            TrieTreeACNode p = root;
-            for (int i = 0; i < n; ++i) {
-                int idx = text[i] - 'a';
-                while (p.children[idx] == null && p != root) {
-                    p = p.failTrieTreeACNode; // 失败指针发挥作用的地方
+            int textLength = text.length;
+            TrieTreeACNode currentNode = root;
+            for (int i = 0; i < textLength; i++) {
+                int index = text[i] - 'a';
+                // 因为根节点时无意义的，所以每次匹配都是拿源串当前字符和当前节点的子节点比较的；
+                // 如果当前节点和源串当前字符相等就不用去找fail了，直接进行后续的替换或是判断源下个字符
+                while (currentNode.children[index] == null && currentNode != root) {
+                    // 当前源串的某个字符没有被匹配上，那就要用fail去寻找最大可匹配的后缀字串对应的模式串，
+                    // 如果有相应的模式串，就将currentNode设置到此处，之后跳出循环，从该处再判断子节点是否和源串当前位置字符是否相等，
+                    // 如果没有相应的模式串，那么循环不会终止，要继续找更小的最大可匹配的后缀字串对应的模式串，
+                    // 除非fail指向了root，root不会有fail的，也会终止循环
+                    currentNode = currentNode.failTrieTreeACNode;
                 }
-                p = p.children[idx];
-                if (p == null) p = root; // 如果没有匹配的，从root开始重新匹配
-                TrieTreeACNode tmp = p;
-                while (tmp != root) { // 打印出可以匹配的模式串
-                    if (tmp.isEndingChar) {
-                        int pos = i-tmp.length+1;
-                        System.out.println("匹配起始下标" + pos + "; 长度" + tmp.length);
+                // 如果源串当前字符和当前位置的子节点匹配上的，那么必定不会continue，直接更新此时的currentNode到子节点上；
+                // 除非是currentNode==root或者是进过while回到了root,那么就有可能匹配不上源串当前字符，所以会直接进行下个字符判断
+                currentNode = currentNode.children[index];
+                if (currentNode == null) {
+                    currentNode = root;
+                    continue;
+                }
+                // currentNode此时就保持不变了，从当前的为再创建一个指针用来进行fail移动，currentNode记录的位置为的是源串的下个字符从该位置匹配
+                TrieTreeACNode tempFail = currentNode;
+                // 要一直遍历到fail指向了root，因为指向root的该模式串后缀字串是没有相应的其他模式串匹配的，所以没必要再查找能匹配的模式串了
+                while (tempFail != root) {
+                    // 如果fail指向的节点时个终节点，那么久可以认为是匹配到了一个模式串
+                    if (tempFail.isEndingChar) {
+                        for (int j = i - 1; j >= i - tempFail.length; j--) {
+                            text[j] = '*';
+                        }
                     }
-                    tmp = tmp.failTrieTreeACNode;
+                    // 以fail当前的节点位置，继续查找最大后缀字串匹配的模式串
+                    tempFail = tempFail.failTrieTreeACNode;
                 }
             }
         }
