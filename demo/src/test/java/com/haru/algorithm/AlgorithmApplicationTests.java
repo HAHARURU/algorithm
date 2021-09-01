@@ -1653,50 +1653,123 @@ class AlgorithmApplicationTests {
      * ---------------------------- Trie树 ----------------------------
      */
 
-    public class TrieTreeNode {
+    public class TrieTreeACNode {
         private char data;
         /**
          * 后续字符
          */
-        private TrieTreeNode[] children = new TrieTreeNode[26];
-        public boolean isEndingChar = false;
-        public TrieTreeNode(char data) {
+        private TrieTreeACNode[] children = new TrieTreeACNode[26];
+        private boolean isEndingChar = false;
+
+        /**
+         * 模式串长度
+         */
+        private int length;
+
+        /**
+         * 失败指针，
+         */
+        private TrieTreeACNode failTrieTreeACNode;
+
+        public TrieTreeACNode(char data) {
             this.data = data;
         }
     }
 
     public class Trie {
         // 根节点
-        private TrieTreeNode root = new TrieTreeNode('/');
+        private TrieTreeACNode root = new TrieTreeACNode('/');
 
         public void insert(char[] text) {
-            TrieTreeNode currentTrieTreeNode = root;
+            TrieTreeACNode currentTrieTreeACNode = root;
             for (char aText : text) {
                 int index = aText - 'a';
-                if (currentTrieTreeNode.children[index] == null) {
+                if (currentTrieTreeACNode.children[index] == null) {
                     // 没有该字符，就新增一个节点
-                    currentTrieTreeNode.children[index] = new TrieTreeNode(aText);
+                    currentTrieTreeACNode.children[index] = new TrieTreeACNode(aText);
                 }
                 // 更新当前节点到子节点上
-                currentTrieTreeNode = currentTrieTreeNode.children[index];
+                currentTrieTreeACNode = currentTrieTreeACNode.children[index];
             }
             // 字符串末尾字符标识
-            currentTrieTreeNode.isEndingChar = true;
+            currentTrieTreeACNode.isEndingChar = true;
+        }
+
+        public void buildFailTrieTreeACode() {
+            // 队列用于按层遍历
+            Queue<TrieTreeACNode> queue = new LinkedList<>();
+            root.failTrieTreeACNode = null;
+            queue.add(root);
+            while (!queue.isEmpty()) {
+                TrieTreeACNode currentNode = queue.remove();
+                // 遍历当前节点所有子节点
+                for (int i = 0; i < 26; i++) {
+                    TrieTreeACNode currentChildrenNode = currentNode.children[i];
+                    if (currentChildrenNode == null) {
+                        continue;
+                    }
+                    if (currentNode == root) {
+                        // 根节点的子节点的失败指针指向根节点
+                        currentChildrenNode.failTrieTreeACNode = root;
+                    } else {
+                        TrieTreeACNode currentNodeFail = currentNode.failTrieTreeACNode;
+                        // 遍历到了根节点的fail了就结束
+                        while (currentNodeFail != null) {
+                            // 判断当前节点的失败指针指向的节点的子节点是否有当前子节点相同的值，就是取当前子节点的上层去找
+                            TrieTreeACNode failNode = currentNodeFail.children[currentChildrenNode.data - 'a'];
+                            if (failNode != null) {
+                                // 有相同的，就该子节点的fail
+                                currentChildrenNode.failTrieTreeACNode = failNode;
+                                break;
+                            }
+                            // 没有相同的，继续向上上层找
+                            currentNodeFail = currentNodeFail.failTrieTreeACNode;
+                        }
+                        if (currentNodeFail == null) {
+                            // 遍历到根节点的fail也没有找到，那设置根节点为当前子节点的fail
+                            currentChildrenNode.failTrieTreeACNode = root;
+                        }
+                    }
+                    queue.add(currentChildrenNode);
+                }
+            }
         }
 
         public boolean find(char[] pattern) {
-            TrieTreeNode currentTrieTreeNode = root;
+            TrieTreeACNode currentTrieTreeACNode = root;
             for (char aPattern : pattern) {
                 int index = aPattern - 'a';
                 // 若当前的字符不存在该节点的子字符散列表中，匹配失败
-                if (currentTrieTreeNode.children[index] == null) {
+                if (currentTrieTreeACNode.children[index] == null) {
                     return false;
                 }
                 // 继续比较下一个字符
-                currentTrieTreeNode = currentTrieTreeNode.children[index];
+                currentTrieTreeACNode = currentTrieTreeACNode.children[index];
             }
             // isEndingChar为false的话就表示只是前缀字符串
-            return currentTrieTreeNode.isEndingChar;
+            return currentTrieTreeACNode.isEndingChar;
+        }
+
+        public void match(char[] text) {
+            int n = text.length;
+            TrieTreeACNode p = root;
+            for (int i = 0; i < n; ++i) {
+                int idx = text[i] - 'a';
+                while (p.children[idx] == null && p != root) {
+                    p = p.failTrieTreeACNode; // 失败指针发挥作用的地方
+                }
+                p = p.children[idx];
+                if (p == null) p = root; // 如果没有匹配的，从root开始重新匹配
+                TrieTreeACNode tmp = p;
+                while (tmp != root) { // 打印出可以匹配的模式串
+                    if (tmp.isEndingChar) {
+                        int pos = i-tmp.length+1;
+                        System.out.println("匹配起始下标" + pos + "; 长度" + tmp.length);
+                    }
+                    tmp = tmp.failTrieTreeACNode;
+                }
+            }
         }
     }
+
 }
