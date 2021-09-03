@@ -39,9 +39,6 @@ class AlgorithmApplicationTests {
      * ############################# 数据结构 #############################
      */
 
-    /**
-     * ---------------------------- 数组 ----------------------------
-     */
 
     /**
      * ---------------------------- 链表 ----------------------------
@@ -658,16 +655,6 @@ class AlgorithmApplicationTests {
         }
     }
 
-    /**
-     * ############################# 递归 #############################
-     */
-
-    /**
-     * ---------------------------- 全排列 ----------------------------
-     */
-    public void printPermutations(int[] items, int size, int k) {
-
-    }
 
     /**
      * ############################# 排序 #############################
@@ -1806,6 +1793,66 @@ class AlgorithmApplicationTests {
                 }
             }
         }
+    }
+
+    /**
+     * ############################# 思想 #############################
+     */
+
+    /**
+     * ---------------------------- 回溯 ----------------------------
+     */
+
+    /**
+     * 八皇后。回溯思想在于列举出所有的途径，每个途径分别尝试一次来得到结果；
+     * 通常可以通过递归的方式将途径分成许多小步，每一小步的选择都会对后面有影响；
+     * 当某个路径没法得到结果时，要回退，选择其他的路径，直至得到最终结果。
+     * 回溯只要得到一个合适的途径即可，其他条件下的流程也就无需进行了，递归体现在只要得到了结果就可以向上返回了，
+     * 若是有遍历的话，其他值也就可以不用执行了；当某次执行未能得到结果时，就选择其他的路径，
+     * 若是在该步骤下的所有条件都没法得到结果，就要回退上一步，遍历的其他条件就是用在这个时候的。
+     */
+
+    /**
+     * 下标表示皇后所在的行，值表示皇后所在的列
+     */
+    private int[] queens = new int[8];
+
+    public Boolean eightQueen(int row) {
+        if (row == 8) {
+            return true;
+        }
+        for (int column = 0; column < 8; column++) {
+            if (canNextRow(row, column)) {
+                queens[row] = column;
+                if (eightQueen(row++)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private Boolean canNextRow(int row, int column) {
+        int leftDiagonal = column - 1;
+        int rightDiagonal = column + 1;
+        // 向上比较每一行
+        for (int previous = row - 1; previous >= 0; previous--) {
+            if (queens[previous] == column) {
+                // 有在同一列的
+                return false;
+            }
+            if (queens[previous] == leftDiagonal) {
+                // 有在左对角线的
+                return false;
+            }
+            if (queens[previous] == rightDiagonal) {
+                // 有在右对角线的
+                return false;
+            }
+            leftDiagonal--;
+            rightDiagonal++;
+        }
+        return true;
     }
 
 }
