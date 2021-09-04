@@ -1930,4 +1930,31 @@ class AlgorithmApplicationTests {
         return maxValue;
     }
 
+
+    /**
+     * 最短路径
+     */
+    public int minDist(int[][] distArray, int count) {
+        int[][] states = new int[count][count];
+        int sumDist = 0;
+        for (int columnIndex = 0; columnIndex < count; columnIndex++) { // 初始化states的第一行数据
+            sumDist += distArray[0][columnIndex];
+            states[0][columnIndex] = sumDist;
+        }
+        sumDist = 0;
+        for (int rowIndex = 0; rowIndex < count; rowIndex++) { // 初始化states的第一列数据
+            sumDist += distArray[rowIndex][0];
+            states[rowIndex][0] = sumDist;
+        }
+
+        for (int rowIndex = 1; rowIndex < count; rowIndex++) {
+            for (int columnIndex = 1; columnIndex < count; columnIndex++) {
+                states[rowIndex][columnIndex] = distArray[rowIndex][columnIndex] + Math.min(states[rowIndex][columnIndex - 1], states[rowIndex - 1][columnIndex]);
+            }
+        }
+
+        return states[count - 1][count - 1];
+    }
+
+
 }
