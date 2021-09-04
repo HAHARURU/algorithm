@@ -1860,44 +1860,71 @@ class AlgorithmApplicationTests {
      */
 
 
-    public static int knapsack(int[] weight, int[] value, int n, int w) {
-        int[][] states = new int[n][w+1];
-        for (int i = 0; i < n; ++i) { // 初始化states
-            for (int j = 0; j < w+1; ++j) {
-                states[i][j] = -1;
+    /**
+     * 0-1背包
+     */
+    public static int knapsack(int[] weight, int[] value, int itemCount, int totalWeight) {
+        Integer[][] states = new Integer[itemCount][totalWeight + 1];
+
+        for (int currentItemIndex = 0; currentItemIndex < itemCount; ++currentItemIndex) {
+            for (int currentItemWeight = 0; currentItemWeight < totalWeight + 1; ++currentItemWeight) {
+                states[currentItemIndex][currentItemWeight] = -1;
             }
         }
+
+        // 第一个物品特殊处理
         states[0][0] = 0;
-        if (weight[0] <= w) {
+        if (weight[0] <= totalWeight) {
             states[0][weight[0]] = value[0];
         }
-        for (int i = 1; i < n; ++i) { //动态规划，状态转移
-            for (int j = 0; j <= w; ++j) { // 不选择第i个物品
-                if (states[i-1][j] >= 0) states[i][j] = states[i-1][j];
+        // 遍历每一个物品
+        for (int currentItemIndex = 1; currentItemIndex < itemCount; currentItemIndex++) { //动态规划，状态转移
+            int currentItemWeight = 0;
+            // 不放当前的物品，沿用上一次的价值
+            for (; currentItemWeight <= totalWeight; currentItemWeight++) {
+                if (states[currentItemIndex - 1][currentItemWeight] > -1) {
+                    states[currentItemIndex][currentItemWeight] = states[currentItemIndex - 1][currentItemWeight];
+                }
             }
-            for (int j = 0; j <= w-weight[i]; ++j) { // 选择第i个物品
-                if (states[i-1][j] >= 0) {
-                    int v = states[i-1][j] + value[i];
-                    if (v > states[i][j+weight[i]]) {
-                        states[i][j+weight[i]] = v;
+            // 放当前的物品
+            for (currentItemWeight = 0; currentItemWeight + weight[currentItemIndex] <= totalWeight; currentItemWeight++) {
+                if (states[currentItemIndex - 1][currentItemWeight] > -1) {
+                    int currentValue = states[currentItemIndex - 1][currentItemWeight] + value[currentItemIndex];
+                    // 在决策当前物品时，选择相同重量下，更大价值的那个选择
+                    if (currentValue > states[currentItemIndex][currentItemWeight + weight[currentItemIndex]]) {
+                        states[currentItemIndex][currentItemWeight + weight[currentItemIndex]] = currentValue;
                     }
                 }
             }
         }
-        // 找出最大值
-        int maxvalue = -1;
-        for (int j = 0; j <= w; ++j) {
-            if (states[n-1][j] > maxvalue) maxvalue = states[n-1][j];
+        // 找出最大价值和重量
+        int maxValue = states[itemCount - 1][0];
+        int maxWeight = 0;
+        for (int currentItemWeight = 1; currentItemWeight <= totalWeight; ++currentItemWeight) {
+            if (states[itemCount - 1][currentItemWeight] > -1) {
+                maxWeight = currentItemWeight;
+                if (states[itemCount - 1][currentItemWeight] > maxValue) {
+                    maxValue = states[itemCount - 1][currentItemWeight];
+                }
+            }
         }
-        return maxvalue;
+
+        // 反向输出所有物品
+        for (int currentItemIndex = itemCount - 1; currentItemIndex >= 1; currentItemIndex--) {
+            int previousWeight = maxWeight - weight[currentItemIndex];
+            // 放了当前物品，唯一可能就是相同重量情况下价值更大
+            if (previousWeight >= 0 && states[currentItemIndex - 1][previousWeight]  > -1 &&
+                    states[currentItemIndex - 1][previousWeight] > states[currentItemIndex - 1][maxWeight]) {
+                System.out.print(weight[currentItemIndex] + " ");
+                maxWeight = previousWeight;
+            }
+        }
+        // 第一个物品放入时，必定有重量
+        if (maxWeight != 0) {
+            System.out.print(weight[0]);
+        }
+
+        return maxValue;
     }
 
-
-    /*for (int i = n-1; i >= 1; --i) { // i表示二维数组中的行，j表示列
-        if(j-items[i] >= 0 && states[i-1][j-items[i]] == true) {
-            System.out.print(items[i] + " "); // 购买这个商品
-            j = j - items[i];
-        } // else 没有购买这个商品，j不变。
-    }
-        if (j != 0) System.out.print(items[0]);*/
 }
