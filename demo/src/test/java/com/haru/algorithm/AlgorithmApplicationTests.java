@@ -655,6 +655,46 @@ class AlgorithmApplicationTests {
         }
     }
 
+    /**
+     * ---------------------------- 位图 ----------------------------
+     */
+
+    /**
+     * 使用位图来节约存储，比如存0~31数，通常需要长度32的数组，使用位图只需要一个int型就可以了。
+     */
+    class Bitmap {
+        private int[] bitmap;
+
+        /**
+         * 要存储多少是个数值
+         */
+        private int count;
+
+        public Bitmap(int count) {
+            // 初始化位图数组个数，bitmap[i]存储的是i * 32 ~ (i + 1) * 32 - 1，小于32的count / 32得到的是0，为了数组有大小，所以+ 1
+            this.bitmap = new int[count / 32 + 1];
+            this.count = count;
+        }
+
+        public void set(int value) {
+            if (value > count) {
+                return;
+            }
+            int bitmapIndex = value >> 5;   // value / 32
+            int bitIndex = value & 31;  // value % 32
+            bitmap[bitmapIndex] |= 1 << bitIndex;   // 找到当前数值所在的数组下标，在相应的二进制位上设为1，保证其他位不变
+        }
+
+        public boolean isExist(int value) {
+            if (value > count) {
+                return false;
+            }
+            int bitmapIndex = value >> 5;
+            int bitIndex = value & 31;
+            return (bitmap[bitmapIndex] & (1 << bitIndex)) == 1;
+        }
+    }
+
 
     /**
      * ############################# 排序 #############################
@@ -662,10 +702,6 @@ class AlgorithmApplicationTests {
 
     /**
      * ---------------------------- 冒泡排序 ----------------------------
-     */
-
-    /**
-     * 优化版
      */
     public void bubbleSort(int[] items, int count) {
         if (count <= 1) {
