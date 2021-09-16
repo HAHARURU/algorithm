@@ -15,6 +15,7 @@ class AlgorithmApplicationTests {
     void contextLoads() {
     }
 
+
     /**
      * ############################# 时间复杂度 #############################
      */
@@ -57,9 +58,14 @@ class AlgorithmApplicationTests {
 
     /**
      * 单向链表判断回文字符串
-     *
-     * @param listNode
-     * @return
+     *  要反转一个单向链表，肯定要向后遍历，所以每次遍历必有slow=slow.next，但是我们每次向后移动slow指针时，要拿到slow指针当前指向的结点，
+     *  用于构造一个反向链表，也就要将前面的一步拆成两步，如上10、13行；每次遍历构造反向链表的结点也必是将当前的节点设置为反向链表的结点，也就是12行；
+     *  然后关键是反向链表结点的next如何确定？有两种方式，一种是在设置反向链表结点前slow.next = null，另一种是在其后reverse.next=null；
+     *  对于遍历的首次，反向链表的构造的“第一个”结点，应该是叫最后一个结点，next必定是null；所以这两种还区别不出来；
+     *  当接下来第二次遍历时，设置“第二个”结点的next就是“第一个”结点，按第二种方式就是reverse.next=oldReverse，一种是slow.next = reverse；
+     *  可以看出第二种方式还需要一个额外的结点来保存上一次的结点，稍微会多占一点内存空间；用一种就复用了slow的next来暂存上一次的结点；
+     *  然后统一一下，可以先将reverse初始为null。
+     *  总结一下就是，遍历（单向）链表最重要的是暂存每一次的结点和如果可以的话用现有的空间来暂存。
      */
     public Boolean isPalindrome(LinkNode listNode) {
         if (listNode == null || listNode.next == null) {
@@ -127,7 +133,7 @@ class AlgorithmApplicationTests {
             if (count == 0) {
                 return null;
             }
-            return items[count-- - 1];
+            return items[--count];
         }
     }
 
@@ -196,6 +202,40 @@ class AlgorithmApplicationTests {
     }
 
     /**
+     * 链表实现队列
+     */
+    class LinkQueue {
+
+        private LinkNode head;
+        private LinkNode tail;
+
+        public void enqueue(String value) {
+            LinkNode linkNode = new LinkNode(value, null);
+            if (tail == null) {
+                // 只有一个结点，tail和head都指向这一个结点
+                head = linkNode;
+                tail = linkNode;
+            } else {
+                tail.next = linkNode;
+                tail = linkNode;
+            }
+        }
+
+        public String dequeue() {
+            if (head == null) {
+                return null;
+            }
+            String value = head.value;
+            head = head.next;
+            // 出最后一个结点，要取消tail的指向
+            if (head == null) {
+                tail = null;
+            }
+            return value;
+        }
+    }
+
+    /**
      * 循环队列
      */
     class CycleQueue {
@@ -229,44 +269,40 @@ class AlgorithmApplicationTests {
     }
 
     /**
-     * 链表实现队列
-     */
-    class LinkQueue {
-        private LinkNode head;
-        private LinkNode tail;
-
-        public void enqueue(String value) {
-            LinkNode linkNode = new LinkNode(value, null);
-            if (tail == null) {
-                head = linkNode;
-                tail = linkNode;
-            }
-            // 只有一个结点，tail和head都指向这一个结点
-            tail.next = linkNode;
-            tail = linkNode;
-        }
-
-        public String dequeue() {
-            if (head == null) {
-                return null;
-            }
-            String value = head.value;
-            head = head.next;
-            // 出最后一个结点，要取消tail的指向
-            if (head == null) {
-                tail = null;
-            }
-            return value;
-        }
-    }
-
-    /**
      * ---------------------------- 二叉搜索树 ----------------------------
      */
+
+    @Data
+    @ToString
+    class TreeNode {
+        private int value;
+
+        private TreeNode left;
+
+        private TreeNode right;
+    }
+
 
     class BinarySearchTree {
 
         private TreeNode tree;
+
+        public TreeNode find(int value) {
+            if (tree == null) {
+                return null;
+            }
+            TreeNode treeNode = tree;
+            while (treeNode != null) {
+                if (treeNode.value < value) {
+                    treeNode = tree.right;
+                } else if (treeNode.value > value) {
+                    treeNode = treeNode.left;
+                } else {
+                    return treeNode;
+                }
+            }
+            return null;
+        }
 
         public void insert(int value) {
             TreeNode insertTreeNode = new TreeNode();
@@ -293,23 +329,12 @@ class AlgorithmApplicationTests {
             }
         }
 
-        public TreeNode find(int value) {
-            if (tree == null) {
-                return null;
-            }
-            TreeNode treeNode = tree;
-            while (treeNode != null) {
-                if (treeNode.value < value) {
-                    treeNode = tree.right;
-                } else if (treeNode.value > value) {
-                    treeNode = treeNode.left;
-                } else {
-                    return treeNode;
-                }
-            }
-            return null;
-        }
-
+        /**
+         * 如果要删除的节点没有子节点，我们只需要直接将父节点中，指向要删除节点的指针置为 null;
+         * 如果要删除的节点只有一个子节点，我们只需要更新父节点中，指向要删除节点的指针，让它指向要删除节点的子节点就可以了;
+         * 如果要删除的节点有两个子节点，我们需要找到这个节点的右子树中的最小节点，把它替换到要删除的节点上，
+         * 然后再删除掉这个最小节点，因为最小节点肯定没有左子节点（如果有左子结点，那就不是最小节点了），所以，我们可以应用上面两条规则来删除这个最小节点
+         */
         public void delete(int value) {
             if (tree == null) {
                 return;
@@ -341,7 +366,7 @@ class AlgorithmApplicationTests {
                 return;
             }
 
-            // 被删除的节点有左右节点，要从右子树找最小的节点值替换被删除的节点，之后去删除找到的最小节点；从右子树找是为了尽量想完全二叉树靠拢
+            // 被删除的节点有左右节点，要从右子树找最小的节点值替换被删除的节点，之后去删除找到的最小节点；从右子树找是为了尽量向完全二叉树靠拢
             if (deleteTreeNode.left != null && deleteTreeNode.right != null) {
                 TreeNode minTreeNode = deleteTreeNode.right;
                 TreeNode minTreeNodeParent = deleteTreeNode;
@@ -363,7 +388,7 @@ class AlgorithmApplicationTests {
                 childTreeNode = deleteTreeNode.right;
             }
 
-            // 判断删除的节点时父节点的左节点还是右节点
+            // 判断删除的节点是父节点的左节点还是右节点
             if (deleteTreeNodeParent.left == deleteTreeNode) {
                 deleteTreeNodeParent.left = childTreeNode;
             } else {
@@ -377,11 +402,11 @@ class AlgorithmApplicationTests {
      */
 
     /**
-     * * ---->  * -------------------------------> NULL
-     * * ---->  * -------------------------------> NULL
-     * -1* ----> 4* ---------------------->  * ----> NULL
-     * * ---->  * -------------> 8* ----> 9* ----> NULL
-     * * ---->  * ----> 6* ---->  * ---->  * ----> NULL
+     *    *   ---->   * ---------------------------------> NULL
+     *    *   ---->   * ---------------------------------> NULL
+     * -1 *   ----> 4 * ----------------------->   * ----> NULL
+     *    *   ---->   * --------------> 8 * ---> 9 * ----> NULL
+     *    *   ---->   * ----> 6 * ---->   * --->   * ----> NULL
      */
     class SkipList {
         class SkipNode {
@@ -1207,16 +1232,6 @@ class AlgorithmApplicationTests {
      * ---------------------------- 二叉树遍历 ----------------------------
      */
 
-    @Data
-    @ToString
-    class TreeNode {
-        private int value;
-
-        private TreeNode left;
-
-        private TreeNode right;
-    }
-
     /**
      * 递归前序
      */
@@ -1991,6 +2006,5 @@ class AlgorithmApplicationTests {
 
         return states[count - 1][count - 1];
     }
-
 
 }

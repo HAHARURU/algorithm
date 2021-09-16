@@ -8,9 +8,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 class AlgorithmTests {
 
     @Test
-    void contextLoads() {
-
+    public void s() {
     }
+
 
 
 }
